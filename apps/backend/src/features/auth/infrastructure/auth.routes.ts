@@ -11,8 +11,6 @@ import { Role } from '../domain/Role.enum';
 
 export async function authRoutes(app: FastifyInstance): Promise<void> {
 
-  // ── Wire up dependencies ─────────────────────────────────
-  // This is where everything connects together
   const userRepository = new PrismaUserRepository(prisma);
   const hashService    = new BcryptHashService();
   const tokenService   = new JwtService();
@@ -21,7 +19,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
   const loginUseCase        = new LoginUserUseCase(userRepository, hashService, tokenService);
   const refreshTokenUseCase = new RefreshTokenUseCase(userRepository, tokenService);
 
-  // ── POST /auth/register ──────────────────────────────────
+  // POST /auth/register — create a new user account
   app.post('/auth/register', async (request, reply) => {
     const body = request.body as {
       email:          string;
@@ -32,21 +30,35 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       organizationId: string;
     };
 
+    if (!body.email || !body.password || !body.firstName || !body.lastName) {
+      return reply.status(400).send({ error: 'All fields are required' });
+    }
+
     const result = await registerUseCase.execute(body);
 
     if (!result.isSuccess) {
       return reply.status(400).send({ error: result.error });
     }
 
-    return reply.status(201).send(result.value);
+    return reply.status(201).send({
+      message:   'Account created successfully',
+      id:        result.value.user.id,
+      email:     result.value.user.email,
+      fullName:  result.value.user.fullName,
+      role:      result.value.user.role,
+    });
   });
 
-  // ── POST /auth/login ─────────────────────────────────────
+  // POST /auth/login — login and get access token
   app.post('/auth/login', async (request, reply) => {
     const body = request.body as {
       email:    string;
       password: string;
     };
+
+    if (!body.email || !body.password) {
+      return reply.status(400).send({ error: 'Email and password are required' });
+    }
 
     const result = await loginUseCase.execute(body);
 
@@ -54,12 +66,25 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(401).send({ error: result.error });
     }
 
-    return reply.status(200).send(result.value);
+    return reply.status(200).send({
+      accessToken: result.value.accessToken,
+      user: {
+        id:             result.value.user.id,
+        email:          result.value.user.email,
+        fullName:       result.value.user.fullName,
+        role:           result.value.user.role,
+        organizationId: result.value.user.organizationId,
+      },
+    });
   });
 
-  // ── POST /auth/refresh ───────────────────────────────────
+  // POST /auth/refresh — refresh an expired token
   app.post('/auth/refresh', async (request, reply) => {
     const body = request.body as { token: string };
+
+    if (!body.token) {
+      return reply.status(400).send({ error: 'Token is required' });
+    }
 
     const result = await refreshTokenUseCase.execute(body);
 
@@ -67,14 +92,20 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(401).send({ error: result.error });
     }
 
-    return reply.status(200).send(result.value);
+    return reply.status(200).send({
+      accessToken: result.value.accessToken,
+    });
   });
 
-  // ── GET /auth/me ─────────────────────────────────────────
-  // Returns the currently logged-in user's info from the token
+  // GET /auth/me — get currently logged in user
   app.get('/auth/me', {
     preHandler: [authenticate]
   }, async (request, reply) => {
-    return reply.status(200).send({ user: request.currentUser });
+    return reply.status(200).send({
+      id:             request.currentUser.userId,
+      email:          request.currentUser.email,
+      role:           request.currentUser.role,
+      organizationId: request.currentUser.organizationId,
+    });
   });
 }

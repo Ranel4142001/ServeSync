@@ -5,28 +5,24 @@ import { Role }    from '../domain/Role.enum';
 import { IUserRepository } from '../domain/IUserRepository';
 import { IHashService }    from '../domain/IHashService';
 
-// ── Input ────────────────────────────────────────────────
-// Exactly what the caller must provide to register a user
+// Input — plain-text password is hashed before storage
 export interface RegisterUserInput {
   email:          string;
-  password:       string;  // plain text — we hash it here
+  password:       string;
   firstName:      string;
   lastName:       string;
   role:           Role;
   organizationId: string;
 }
 
-// ── Output ───────────────────────────────────────────────
-// What the use-case returns on success
+// Output — serialized user returned on success
 export interface RegisterUserOutput {
   user: ReturnType<User['toJSON']>;
 }
 
-// ── Use-case ─────────────────────────────────────────────
 export class RegisterUserUseCase
   implements UseCase<Result<RegisterUserOutput>, RegisterUserInput>
 {
-  // Dependencies are injected — this class never creates them itself
   constructor(
     private readonly userRepository: IUserRepository,
     private readonly hashService:    IHashService,
@@ -34,18 +30,16 @@ export class RegisterUserUseCase
 
   async execute(input: RegisterUserInput): Promise<Result<RegisterUserOutput>> {
 
-    // Step 1 — Check if email is already taken
+    // 1 — Reject if email is already taken
     const emailTaken = await this.userRepository.existsByEmail(input.email);
     if (emailTaken) {
       return Result.fail('A user with this email already exists');
     }
 
-    // Step 2 — Hash the password before storing it
-    // Plain text password never touches the database
+    // 2 — Hash the password; plain text never touches the database
     const passwordHash = await this.hashService.hash(input.password);
 
-    // Step 3 — Create the User entity using the factory method
-    // If validation fails (bad email, empty name) it throws here
+    // 3 — Create the User entity; throws if validation fails (bad email, empty name)
     const user = User.create({
       email:          input.email,
       passwordHash,
@@ -58,12 +52,9 @@ export class RegisterUserUseCase
       updatedAt:      new Date(),
     });
 
-    // Step 4 — Persist the user via the repository interface
-    // We don't know if this is Prisma, MongoDB, or a text file
+    // 4 — Persist via the repository; toJSON() ensures passwordHash is never in the response
     const saved = await this.userRepository.save(user);
 
-    // Step 5 — Return success with the serialized user
-    // toJSON() ensures passwordHash is never in the response
     return Result.ok({ user: saved.toJSON() });
   }
 }

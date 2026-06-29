@@ -1,20 +1,17 @@
 import { Organization } from './Organization.entity';
 
-// The CONTRACT — defines what we can do with organizations
-// No Prisma here, just pure TypeScript interfaces
+// Contract for organization persistence — no Prisma, just the shape of operations
 export interface IOrganizationRepository {
 
-  // Find one organization by its unique ID
+  // Find an organization by ID
   findById(id: string): Promise<Organization | null>;
 
-  // Find one organization by its slug
-  // Used to check if a slug is already taken
+  // Find an organization by slug
   findBySlug(slug: string): Promise<Organization | null>;
 
-  // Save a new organization to the database
+  // Save a new organization or update an existing one
   save(organization: Organization): Promise<Organization>;
 
-  // Check if a slug already exists
-  // Used during creation to prevent duplicates
+  // Check if a slug is already taken — used during creation to prevent duplicates
   existsBySlug(slug: string): Promise<boolean>;
 }
