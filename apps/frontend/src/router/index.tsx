@@ -2,6 +2,9 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/features/auth/stores/auth.store';
 import { LoginPage }    from '@features/auth/components/LoginPage';
 import { RegisterPage } from '@features/auth/components/RegisterPage';
+import { AdminDashboard }  from '@features/dashboard/pages/AdminDashboard';
+import { AgentDashboard }  from '@features/dashboard/pages/AgentDashboard';
+import { ClientDashboard } from '@features/dashboard/pages/ClientDashboard';
 
 // ── Protected Route ──────────────────────────────────────
 // Wraps any route that requires the user to be logged in
@@ -56,28 +59,22 @@ export function AppRouter() {
           </GuestRoute>
         }/>
 
-        {/* Protected routes — we will add dashboards here next */}
+        {/* Protected routes — role-specific dashboards */}
         <Route path="/admin/dashboard" element={
           <ProtectedRoute>
-            <div className="p-8 text-xl font-bold">
-              Admin Dashboard — Coming soon!
-            </div>
+            <AdminDashboard />
           </ProtectedRoute>
         }/>
 
         <Route path="/agent/dashboard" element={
           <ProtectedRoute>
-            <div className="p-8 text-xl font-bold">
-              Agent Dashboard — Coming soon!
-            </div>
+            <AgentDashboard />
           </ProtectedRoute>
         }/>
 
         <Route path="/client/dashboard" element={
           <ProtectedRoute>
-            <div className="p-8 text-xl font-bold">
-              Client Dashboard — Coming soon!
-            </div>
+            <ClientDashboard />
           </ProtectedRoute>
         }/>
 
