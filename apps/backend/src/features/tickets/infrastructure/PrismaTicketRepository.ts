@@ -10,8 +10,7 @@ export class PrismaTicketRepository implements ITicketRepository {
 
   constructor(private readonly prisma: PrismaClient) {}
 
-  // ── Private helpers ──────────────────────────────────────
-  // Converts a raw Prisma row into a clean Ticket entity
+  // Maps a raw Prisma row to a Ticket entity — only place that knows Prisma's ticket shape
   private toTicketEntity(raw: any): Ticket {
     return Ticket.create(
       {
@@ -30,7 +29,7 @@ export class PrismaTicketRepository implements ITicketRepository {
     );
   }
 
-  // Converts a raw Prisma row into a clean Message entity
+  // Maps a raw Prisma row to a Message entity — only place that knows Prisma's message shape
   private toMessageEntity(raw: any): Message {
     return Message.create(
       {
@@ -53,7 +52,7 @@ export class PrismaTicketRepository implements ITicketRepository {
   async findByOrganizationId(organizationId: string): Promise<Ticket[]> {
     const rows = await this.prisma.ticket.findMany({
       where:   { organizationId },
-      orderBy: { createdAt: 'desc' }, // newest first
+      orderBy: { createdAt: 'desc' },
     });
     return rows.map(row => this.toTicketEntity(row));
   }
@@ -90,6 +89,7 @@ export class PrismaTicketRepository implements ITicketRepository {
       updatedAt:      new Date(),
     };
 
+    // Upsert — create if new, update if exists
     const raw = await this.prisma.ticket.upsert({
       where:  { id: ticket.id || '' },
       update: data,
@@ -99,10 +99,11 @@ export class PrismaTicketRepository implements ITicketRepository {
     return this.toTicketEntity(raw);
   }
 
+  // Messages are ordered oldest-first to preserve conversation order
   async findMessagesByTicketId(ticketId: string): Promise<Message[]> {
     const rows = await this.prisma.message.findMany({
       where:   { ticketId },
-      orderBy: { createdAt: 'asc' }, // oldest first — conversation order
+      orderBy: { createdAt: 'asc' },
     });
     return rows.map(row => this.toMessageEntity(row));
   }
