@@ -3,12 +3,12 @@ import { ITokenService, TokenPayload } from '../domain/ITokenService';
 
 export class JwtService implements ITokenService {
 
-  private readonly secret: string;
+  private readonly secret:    string;
   private readonly expiresIn: string;
 
   constructor() {
-    // Read from environment variables — never hardcode secrets
-    this.secret    = process.env.JWT_SECRET    ?? 'fallback-secret';
+    // Read from environment variables; never hardcode secrets
+    this.secret    = process.env.JWT_SECRET     ?? 'fallback-secret';
     this.expiresIn = process.env.JWT_EXPIRES_IN ?? '7d';
   }
 
@@ -20,7 +20,7 @@ export class JwtService implements ITokenService {
 
   verify(token: string): TokenPayload | null {
     try {
-      // jwt.verify throws if invalid or expired — we catch and return null
+      // jwt.verify throws if invalid or expired — catch and return null
       const decoded = jwt.verify(token, this.secret) as TokenPayload;
       return decoded;
     } catch {

@@ -5,7 +5,7 @@ import { Message }  from '../domain/Message.entity';
 import { Role }     from '../../auth/domain/Role.enum';
 import { ITicketRepository } from '../domain/ITicketRepository';
 
-// ── Input ────────────────────────────────────────────────
+// Input — ticket to fetch and the requesting user's identity for access checks
 export interface GetTicketByIdInput {
   ticketId:       string;
   userId:         string;
@@ -13,13 +13,12 @@ export interface GetTicketByIdInput {
   organizationId: string;
 }
 
-// ── Output ───────────────────────────────────────────────
+// Output — the ticket and its full message history
 export interface GetTicketByIdOutput {
   ticket:   ReturnType<Ticket['toJSON']>;
   messages: ReturnType<Message['toJSON']>[];
 }
 
-// ── Use-case ─────────────────────────────────────────────
 export class GetTicketByIdUseCase
   implements UseCase<Result<GetTicketByIdOutput>, GetTicketByIdInput>
 {
@@ -29,14 +28,13 @@ export class GetTicketByIdUseCase
 
   async execute(input: GetTicketByIdInput): Promise<Result<GetTicketByIdOutput>> {
 
-    // Step 1 — Find the ticket
+    // 1 — Load the ticket
     const ticket = await this.ticketRepository.findById(input.ticketId);
     if (!ticket) {
       return Result.fail('Ticket not found');
     }
 
-    // Step 2 — Check access rights
-    // Clients can only view their OWN tickets
+    // 2 — Clients can only view their own tickets
     if (
       input.role === Role.CLIENT &&
       ticket.clientId !== input.userId
@@ -44,7 +42,7 @@ export class GetTicketByIdUseCase
       return Result.fail('You do not have access to this ticket');
     }
 
-    // Agents and Admins can only view tickets in their organization
+    // 3 — Agents and admins can only view tickets within their organization
     if (
       input.role !== Role.CLIENT &&
       ticket.organizationId !== input.organizationId
@@ -52,7 +50,7 @@ export class GetTicketByIdUseCase
       return Result.fail('You do not have access to this ticket');
     }
 
-    // Step 3 — Get all messages for this ticket
+    // 4 — Load and return the ticket with its messages
     const messages = await this.ticketRepository.findMessagesByTicketId(
       input.ticketId
     );

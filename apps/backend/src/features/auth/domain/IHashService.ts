@@ -1,10 +1,9 @@
-// Contract for password hashing — no bcrypt here, just the shape
+// Contract for password hashing
 export interface IHashService {
 
-  // Takes a plain password, returns a hashed version
+  // Hash a plain-text password
   hash(plain: string): Promise<string>;
 
-  // Compares a plain password against a stored hash
-  // Returns true if they match, false if not
+  // Compare a plain-text password against a stored hash; returns true if they match
   compare(plain: string, hash: string): Promise<boolean>;
 }

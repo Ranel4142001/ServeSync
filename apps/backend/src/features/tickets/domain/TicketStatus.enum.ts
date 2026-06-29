@@ -1,5 +1,4 @@
-// Represents the lifecycle of a ticket
-// A ticket always starts as OPEN and ends as CLOSED
+// Lifecycle of a ticket — always starts as OPEN, ends as CLOSED
 export enum TicketStatus {
   OPEN        = 'OPEN',        // just created, waiting for agent
   IN_PROGRESS = 'IN_PROGRESS', // agent is working on it

@@ -5,45 +5,35 @@ import { CreateOrganizationUseCase }     from '../application/CreateOrganization
 
 export async function organizationRoutes(app: FastifyInstance): Promise<void> {
 
-  // ── Wire up dependencies ─────────────────────────────────
   const organizationRepository = new PrismaOrganizationRepository(prisma);
   const createOrgUseCase       = new CreateOrganizationUseCase(organizationRepository);
 
-  // ── POST /organizations ──────────────────────────────────
-  // Creates a new organization (a new business/tenant)
-  // This is the FIRST thing that must happen before any user can register
+  // POST /organizations — create a new organization
   app.post('/organizations', async (request, reply) => {
+    const body = request.body as { name: string; slug?: string };
 
-    // Extract name and optional slug from request body
-    const body = request.body as {
-      name:   string;
-      slug?:  string;
-    };
-
-    // Make sure name was provided
     if (!body.name) {
-      return reply.status(400).send({
-        error: 'Organization name is required'
-      });
+      return reply.status(400).send({ error: 'Organization name is required' });
     }
 
-    // Run the use-case
     const result = await createOrgUseCase.execute({
       name: body.name,
       slug: body.slug,
     });
 
-    // If something went wrong (e.g. slug taken) return 400
     if (!result.isSuccess) {
       return reply.status(400).send({ error: result.error });
     }
 
-    // Return the created organization with 201 Created
-    return reply.status(201).send(result.value);
+    return reply.status(201).send({
+      message: `Organization created successfully`,
+      id:      result.value.organization.id,
+      name:    result.value.organization.name,
+      slug:    result.value.organization.slug,
+    });
   });
 
-  // ── GET /organizations/:id ───────────────────────────────
-  // Get a single organization by ID
+  // GET /organizations/:id — get a single organization
   app.get('/organizations/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
 
@@ -53,6 +43,11 @@ export async function organizationRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(404).send({ error: 'Organization not found' });
     }
 
-    return reply.status(200).send({ organization: org.toJSON() });
+    return reply.status(200).send({
+      id:        org.id,
+      name:      org.name,
+      slug:      org.slug,
+      createdAt: org.createdAt,
+    });
   });
 }

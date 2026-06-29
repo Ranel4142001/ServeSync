@@ -1,67 +1,59 @@
-import { UseCase }   from '@shared/application/UseCase';
-import { Result }    from '@shared/domain/Result';
-import { Invoice }   from '../domain/Invoice.entity';
-import { Role }      from '../../auth/domain/Role.enum';
-import { IInvoiceRepository } from '../domain/IInvoiceRepository';
+import { UseCase } from "@shared/application/UseCase";
+import { Result } from "@shared/domain/Result";
+import { Invoice } from "../domain/Invoice.entity";
+import { Role } from "../../auth/domain/Role.enum";
+import { IInvoiceRepository } from "../domain/IInvoiceRepository";
 
-// ── Input ────────────────────────────────────────────────
+// Input — organizationId and role from JWT; optional filter for unpaid only
 export interface GetInvoicesInput {
-  organizationId: string; // from JWT token
-  role:           Role;   // from JWT token
-  unpaidOnly?:    boolean; // filter to show only unpaid invoices
+  organizationId: string;
+  role: Role;
+  unpaidOnly?: boolean;
 }
 
-// ── Output ───────────────────────────────────────────────
+// Output — invoice list with total paid and unpaid amounts
 export interface GetInvoicesOutput {
-  invoices:     ReturnType<Invoice['toJSON']>[];
-  totalUnpaid:  number; // total amount owed across all unpaid invoices
-  totalPaid:    number; // total amount paid
+  invoices: ReturnType<Invoice["toJSON"]>[];
+  totalUnpaid: number;
+  totalPaid: number;
 }
 
-// ── Use-case ─────────────────────────────────────────────
-export class GetInvoicesUseCase
-  implements UseCase<Result<GetInvoicesOutput>, GetInvoicesInput>
-{
-  constructor(
-    private readonly invoiceRepository: IInvoiceRepository,
-  ) {}
+export class GetInvoicesUseCase implements UseCase<
+  Result<GetInvoicesOutput>,
+  GetInvoicesInput
+> {
+  constructor(private readonly invoiceRepository: IInvoiceRepository) {}
 
   async execute(input: GetInvoicesInput): Promise<Result<GetInvoicesOutput>> {
-
-    // Step 1 — Only admins can view billing
-    // Agents and clients have no reason to see invoices
+    // 1 — Only admins can view billing information
     if (input.role !== Role.ADMIN) {
-      return Result.fail('Only admins can view billing information');
+      return Result.fail("Only admins can view billing information");
     }
 
-    // Step 2 — Get invoices based on filter
+    // 2 — Fetch unpaid only or full billing history based on filter
     let invoices: Invoice[];
 
     if (input.unpaidOnly) {
-      // Get only unpaid invoices
       invoices = await this.invoiceRepository.findUnpaidByOrganizationId(
-        input.organizationId
+        input.organizationId,
       );
     } else {
-      // Get all invoices — full billing history
       invoices = await this.invoiceRepository.findByOrganizationId(
-        input.organizationId
+        input.organizationId,
       );
     }
 
-    // Step 3 — Calculate totals
-    // This is business logic — it belongs in the use-case
-    // not in the route handler or the repository
+    // 3 — Calculate totals across the result set
     const totalUnpaid = invoices
-      .filter(inv => !inv.isPaid)  // only unpaid ones
-      .reduce((sum, inv) => sum + inv.amount, 0); // add up amounts
+      .filter((inv) => !inv.isPaid)
+      .reduce((sum, inv) => sum + inv.amount, 0);
 
     const totalPaid = invoices
-      .filter(inv => inv.isPaid)   // only paid ones
+      .filter((inv) => inv.isPaid)
       .reduce((sum, inv) => sum + inv.amount, 0);
 
     return Result.ok({
-      invoices:    invoices.map(inv => inv.toJSON()),
+      invoices: invoices.map((inv) => inv.toJSON()),
       totalUnpaid,
       totalPaid,
     });

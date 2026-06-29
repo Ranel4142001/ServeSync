@@ -3,45 +3,38 @@ import { Result }        from '@shared/domain/Result';
 import { Organization }  from '../domain/Organization.entity';
 import { IOrganizationRepository } from '../domain/IOrganizationRepository';
 
-// ── Input ────────────────────────────────────────────────
-// What the caller must provide to create an organization
+// Input — name is required; slug is auto-generated from name if not provided
 export interface CreateOrganizationInput {
-  name: string;   // e.g. "Acme Corp"
-  slug?: string;  // optional — we auto-generate it from name if not provided
+  name:  string;
+  slug?: string;
 }
 
-// ── Output ───────────────────────────────────────────────
-// What we return on success
+// Output — the newly created organization
 export interface CreateOrganizationOutput {
   organization: ReturnType<Organization['toJSON']>;
 }
 
-// ── Use-case ─────────────────────────────────────────────
 export class CreateOrganizationUseCase
   implements UseCase<Result<CreateOrganizationOutput>, CreateOrganizationInput>
 {
   constructor(
-    // Depends on the interface, not on Prisma directly
     private readonly organizationRepository: IOrganizationRepository,
   ) {}
 
   async execute(input: CreateOrganizationInput): Promise<Result<CreateOrganizationOutput>> {
 
-    // Step 1 — Generate slug from name if not provided
-    // e.g. if name is "Acme Corp" and no slug given → "acme-corp"
+    // 1 — Generate slug from name if not provided e.g. "Acme Corp" → "acme-corp"
     const slug = input.slug
       ? input.slug
       : Organization.generateSlug(input.name);
 
-    // Step 2 — Check if slug is already taken
-    // Two organizations cannot have the same slug
+    // 2 — Reject if slug is already taken
     const slugTaken = await this.organizationRepository.existsBySlug(slug);
     if (slugTaken) {
       return Result.fail(`Slug "${slug}" is already taken. Please choose a different name.`);
     }
 
-    // Step 3 — Create the Organization entity
-    // If name or slug is invalid, it throws here before hitting the DB
+    // 3 — Create the Organization entity; throws if name or slug is invalid
     const organization = Organization.create({
       name:      input.name,
       slug,
@@ -49,10 +42,9 @@ export class CreateOrganizationUseCase
       updatedAt: new Date(),
     });
 
-    // Step 4 — Save to database via the repository interface
+    // 4 — Persist and return the saved organization
     const saved = await this.organizationRepository.save(organization);
 
-    // Step 5 — Return success
     return Result.ok({ organization: saved.toJSON() });
   }
 }

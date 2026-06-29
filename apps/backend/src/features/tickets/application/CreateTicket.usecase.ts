@@ -5,21 +5,20 @@ import { TicketStatus }   from '../domain/TicketStatus.enum';
 import { TicketPriority } from '../domain/TicketPriority.enum';
 import { ITicketRepository } from '../domain/ITicketRepository';
 
-// ── Input ────────────────────────────────────────────────
+// Input — title and optional priority/category; organizationId and clientId from JWT
 export interface CreateTicketInput {
   title:          string;
-  priority?:      TicketPriority; // optional — defaults to MEDIUM
-  category?:      string;         // optional — AI will assign later
-  organizationId: string;         // from the JWT token
-  clientId:       string;         // from the JWT token
+  priority?:      TicketPriority;
+  category?:      string;
+  organizationId: string;
+  clientId:       string;
 }
 
-// ── Output ───────────────────────────────────────────────
+// Output — the newly created ticket
 export interface CreateTicketOutput {
   ticket: ReturnType<Ticket['toJSON']>;
 }
 
-// ── Use-case ─────────────────────────────────────────────
 export class CreateTicketUseCase
   implements UseCase<Result<CreateTicketOutput>, CreateTicketInput>
 {
@@ -29,26 +28,23 @@ export class CreateTicketUseCase
 
   async execute(input: CreateTicketInput): Promise<Result<CreateTicketOutput>> {
 
-    // Step 1 — Create the Ticket entity
-    // Status always starts as OPEN
-    // Priority defaults to MEDIUM if not provided
+    // 1 — Create the Ticket entity; status starts as OPEN, priority defaults to MEDIUM
     const ticket = Ticket.create({
       title:          input.title,
       status:         TicketStatus.OPEN,
       priority:       input.priority ?? TicketPriority.MEDIUM,
       category:       input.category ?? null,
-      aiTriage:       null,  // AI will fill this in Phase 4
+      aiTriage:       null,
       organizationId: input.organizationId,
       clientId:       input.clientId,
-      agentId:        null,  // no agent assigned yet
+      agentId:        null,
       createdAt:      new Date(),
       updatedAt:      new Date(),
     });
 
-    // Step 2 — Save to database
+    // 2 — Persist and return the saved ticket
     const saved = await this.ticketRepository.save(ticket);
 
-    // Step 3 — Return the created ticket
     return Result.ok({ ticket: saved.toJSON() });
   }
 }

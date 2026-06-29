@@ -3,8 +3,7 @@ import { IHashService } from '../domain/IHashService';
 
 export class BcryptHashService implements IHashService {
 
-  // Salt rounds — higher = more secure but slower
-  // 12 is a good balance for production
+  // 12 salt rounds — good balance of security and performance for production
   private readonly saltRounds = 12;
 
   async hash(plain: string): Promise<string> {

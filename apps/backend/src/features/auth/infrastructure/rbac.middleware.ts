@@ -4,8 +4,7 @@ import { Role } from '../domain/Role.enum';
 
 const tokenService = new JwtService();
 
-// Extends Fastify's request type so TypeScript knows
-// about the user we attach after verifying the token
+// Extends Fastify's request type to include currentUser after token verification
 declare module 'fastify' {
   interface FastifyRequest {
     currentUser: {
@@ -17,9 +16,7 @@ declare module 'fastify' {
   }
 }
 
-// ── authenticate ─────────────────────────────────────────
-// Verifies the JWT token on every protected request.
-// Attach this as a preHandler on any route that needs auth.
+// Verifies the JWT on every protected request; attach as preHandler on guarded routes
 export async function authenticate(
   request: FastifyRequest,
   reply:   FastifyReply
@@ -37,13 +34,11 @@ export async function authenticate(
     return reply.status(401).send({ error: 'Invalid or expired token' });
   }
 
-  // Attach user info to the request so route handlers can use it
+  // Attach verified user to the request for use in route handlers
   request.currentUser = payload;
 }
 
-// ── requireRole ──────────────────────────────────────────
-// Use AFTER authenticate. Checks that the current user
-// has one of the allowed roles for this route.
+// Use after authenticate — rejects requests where the user's role is not in the allowed list
 // Usage: preHandler: [authenticate, requireRole(Role.ADMIN)]
 export function requireRole(...roles: Role[]) {
   return async function (

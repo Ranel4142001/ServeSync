@@ -5,13 +5,9 @@ import { Role } from '../domain/Role.enum';
 
 export class PrismaUserRepository implements IUserRepository {
 
-  // Prisma client is injected — we don't create it here
   constructor(private readonly prisma: PrismaClient) {}
 
-  // ── Private helper ───────────────────────────────────────
-  // Converts a raw Prisma database row into a clean User entity
-  // This is the ONLY place in the entire codebase that knows
-  // how Prisma represents a user — everything else sees User
+  // Maps a raw Prisma row to a User entity — only place that knows Prisma's user shape
   private toEntity(raw: any): User {
     return User.create(
       {
@@ -58,7 +54,7 @@ export class PrismaUserRepository implements IUserRepository {
       updatedAt:      new Date(),
     };
 
-    // If user already has an ID — update. Otherwise — create.
+    // Upsert — update if ID exists, create otherwise
     const raw = await this.prisma.user.upsert({
       where:  { id: user.id || '' },
       update: data,

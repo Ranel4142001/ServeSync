@@ -1,38 +1,33 @@
-// This is the CONTRACT for any AI provider
-// The use-cases talk to this interface — not to Gemini directly
-// This means if Google Gemini becomes too expensive tomorrow,
-// you can swap to OpenAI by writing a new implementation
-// without touching a single use-case
+// Contract for any AI provider — use-cases depend on this interface, not on Gemini directly
+// Swap providers (e.g. Gemini → OpenAI) by writing a new implementation without touching use-cases
 
-// The result of analyzing a ticket
+// Result of analyzing a ticket
 export interface TriageResult {
-  category: string;  // e.g. "Billing", "Bug", "Feature Request"
-  priority: string;  // e.g. "LOW", "MEDIUM", "HIGH", "URGENT"
-  summary:  string;  // a short AI-generated summary of the issue
+  category: string; // e.g. "Billing", "Bug", "Feature Request"
+  priority: string; // e.g. "LOW", "MEDIUM", "HIGH", "URGENT"
+  summary:  string;
 }
 
-// The result of drafting a response
+// Result of drafting a response
 export interface DraftResult {
-  draft: string; // the suggested reply text for the agent
+  draft: string;
 }
 
 export interface IAIProvider {
 
-  // Reads a ticket title and body, returns triage information
-  // e.g. category: "Bug", priority: "HIGH"
+  // Analyze a ticket title and body, return category, priority, and summary
   triageTicket(params: {
-    title:    string; // ticket title
-    body:     string; // first message on the ticket
+    title: string;
+    body:  string;
   }): Promise<TriageResult>;
 
-  // Reads the entire ticket conversation and drafts a reply
-  // The agent reviews and edits before sending
+  // Read the full conversation and draft a reply for the agent to review before sending
   draftResponse(params: {
-    ticketTitle:    string;   // context for the AI
-    ticketCategory: string;   // helps AI understand the type of issue
+    ticketTitle:    string;
+    ticketCategory: string;
     messages: {
-      role: 'client' | 'agent'; // who sent each message
-      body: string;             // what they said
+      role: 'client' | 'agent';
+      body: string;
     }[];
   }): Promise<DraftResult>;
 }

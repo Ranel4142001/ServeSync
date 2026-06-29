@@ -4,15 +4,15 @@ import { IUserRepository } from '../domain/IUserRepository';
 import { IHashService }    from '../domain/IHashService';
 import { ITokenService }   from '../domain/ITokenService';
 
-// ── Input ────────────────────────────────────────────────
+// Input — plain-text password is compared against the stored hash
 export interface LoginUserInput {
   email:    string;
-  password: string;  // plain text — compared against hash
+  password: string;
 }
 
-// ── Output ───────────────────────────────────────────────
+// Output — JWT access token and minimal user info
 export interface LoginUserOutput {
-  accessToken: string;  // JWT the client stores and sends with every request
+  accessToken: string;
   user: {
     id:             string;
     email:          string;
@@ -22,7 +22,6 @@ export interface LoginUserOutput {
   };
 }
 
-// ── Use-case ─────────────────────────────────────────────
 export class LoginUserUseCase
   implements UseCase<Result<LoginUserOutput>, LoginUserInput>
 {
@@ -34,31 +33,28 @@ export class LoginUserUseCase
 
   async execute(input: LoginUserInput): Promise<Result<LoginUserOutput>> {
 
-    // Step 1 — Find user by email
+    // 1 — Find user by email; keep error vague to avoid leaking which field was wrong
     const user = await this.userRepository.findByEmail(input.email);
-
-    // Intentionally vague error — never tell the caller
-    // whether the email or password was wrong (security)
     if (!user) {
       return Result.fail('Invalid email or password');
     }
 
-    // Step 2 — Check if account is active
+    // 2 — Reject deactivated accounts before checking the password
     if (!user.isActive) {
       return Result.fail('This account has been deactivated');
     }
 
-    // Step 3 — Compare provided password against stored hash
+    // 3 — Compare provided password against stored hash
     const passwordMatch = await this.hashService.compare(
       input.password,
       user.passwordHash
     );
 
     if (!passwordMatch) {
-      return Result.fail('Invalid email or password'); // same vague message
+      return Result.fail('Invalid email or password');
     }
 
-    // Step 4 — Sign a JWT token with the user's key info
+    // 4 — Sign a JWT with the user's key claims
     const accessToken = this.tokenService.sign({
       userId:         user.id,
       email:          user.email,
@@ -66,7 +62,7 @@ export class LoginUserUseCase
       organizationId: user.organizationId,
     });
 
-    // Step 5 — Return the token + safe user info
+    // 5 — Return the token and safe user info
     return Result.ok({
       accessToken,
       user: {
