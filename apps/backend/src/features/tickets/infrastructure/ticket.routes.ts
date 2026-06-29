@@ -16,62 +16,56 @@ import {
   emitTicketUpdated,
 } from './tickets.gateway';
 
-// io is passed in so routes can emit real-time events
-// This is why it's a function that accepts io as a parameter
 export function ticketRoutes(io: Server) {
   return async function (app: FastifyInstance): Promise<void> {
 
-    // ── Wire up dependencies ───────────────────────────────
-    // Same pattern as auth — repository → use-cases
-    const ticketRepository   = new PrismaTicketRepository(prisma);
-    const createTicketUseCase    = new CreateTicketUseCase(ticketRepository);
-    const getTicketsUseCase      = new GetTicketsUseCase(ticketRepository);
-    const getTicketByIdUseCase   = new GetTicketByIdUseCase(ticketRepository);
-    const replyToTicketUseCase   = new ReplyToTicketUseCase(ticketRepository);
-    const closeTicketUseCase     = new CloseTicketUseCase(ticketRepository);
+    const ticketRepository     = new PrismaTicketRepository(prisma);
+    const createTicketUseCase  = new CreateTicketUseCase(ticketRepository);
+    const getTicketsUseCase    = new GetTicketsUseCase(ticketRepository);
+    const getTicketByIdUseCase = new GetTicketByIdUseCase(ticketRepository);
+    const replyToTicketUseCase = new ReplyToTicketUseCase(ticketRepository);
+    const closeTicketUseCase   = new CloseTicketUseCase(ticketRepository);
 
-    // ── POST /tickets ──────────────────────────────────────
-    // Creates a new support ticket
-    // Only CLIENTS can create tickets — agents work on them
+    // POST /tickets — create a new ticket (client only)
     app.post('/tickets', {
       preHandler: [authenticate, requireRole(Role.CLIENT)]
     }, async (request, reply) => {
 
-      // Extract ticket info from the request body
       const body = request.body as {
         title:     string;
         priority?: TicketPriority;
         category?: string;
       };
-
-      // Get the logged-in user's info from the JWT token
-      // authenticate middleware already verified and attached this
       const { userId, organizationId } = request.currentUser;
+
+      if (!body.title) {
+        return reply.status(400).send({ error: 'Ticket title is required' });
+      }
 
       const result = await createTicketUseCase.execute({
         title:          body.title,
         priority:       body.priority,
         category:       body.category,
-        organizationId, // from JWT — client belongs to this org
-        clientId:       userId, // from JWT — this client created it
+        organizationId,
+        clientId:       userId,
       });
 
       if (!result.isSuccess) {
         return reply.status(400).send({ error: result.error });
       }
 
-      // Notify all agents in the organization via Socket.io
-      // They will see a new ticket appear on their dashboard
-      // without refreshing the page
       emitTicketCreated(io, organizationId, result.value.ticket);
 
-      return reply.status(201).send(result.value);
+      return reply.status(201).send({
+        message:  'Ticket created successfully',
+        id:       result.value.ticket.id,
+        title:    result.value.ticket.title,
+        status:   result.value.ticket.status,
+        priority: result.value.ticket.priority,
+      });
     });
 
-    // ── GET /tickets ───────────────────────────────────────
-    // Get all tickets
-    // Clients see only their tickets
-    // Agents and Admins see all tickets in their organization
+    // GET /tickets — get all tickets (role-based)
     app.get('/tickets', {
       preHandler: [authenticate]
     }, async (request, reply) => {
@@ -88,12 +82,20 @@ export function ticketRoutes(io: Server) {
         return reply.status(400).send({ error: result.error });
       }
 
-      return reply.status(200).send(result.value);
+      return reply.status(200).send({
+        tickets: result.value.tickets.map(ticket => ({
+          id:        ticket.id,
+          title:     ticket.title,
+          status:    ticket.status,
+          priority:  ticket.priority,
+          category:  ticket.category ?? 'Uncategorized',
+          createdAt: ticket.createdAt,
+        })),
+        total: result.value.tickets.length,
+      });
     });
 
-    // ── GET /tickets/:id ───────────────────────────────────
-    // Get a single ticket with all its messages
-    // Access control is enforced inside the use-case
+    // GET /tickets/:id — get single ticket with messages
     app.get('/tickets/:id', {
       preHandler: [authenticate]
     }, async (request, reply) => {
@@ -109,23 +111,38 @@ export function ticketRoutes(io: Server) {
       });
 
       if (!result.isSuccess) {
-        // 404 if not found, 403 if no access
         const status = result.error?.includes('not found') ? 404 : 403;
         return reply.status(status).send({ error: result.error });
       }
 
-      return reply.status(200).send(result.value);
+      return reply.status(200).send({
+        ticket: {
+          id:        result.value.ticket.id,
+          title:     result.value.ticket.title,
+          status:    result.value.ticket.status,
+          priority:  result.value.ticket.priority,
+          category:  result.value.ticket.category ?? 'Uncategorized',
+          aiTriage:  result.value.ticket.aiTriage,
+          createdAt: result.value.ticket.createdAt,
+        },
+        messages: result.value.messages.map(msg => ({
+          id:        msg.id,
+          body:      msg.body,
+          authorId:  msg.authorId,
+          isAiDraft: msg.isAiDraft,
+          createdAt: msg.createdAt,
+        })),
+        totalMessages: result.value.messages.length,
+      });
     });
 
-    // ── POST /tickets/:id/reply ────────────────────────────
-    // Add a reply to a ticket
-    // Both clients and agents can reply
+    // POST /tickets/:id/reply — add a reply to a ticket
     app.post('/tickets/:id/reply', {
       preHandler: [authenticate]
     }, async (request, reply) => {
 
-      const { id } = request.params as { id: string };
-      const body   = request.body as { body: string };
+      const { id }   = request.params as { id: string };
+      const body     = request.body as { body: string };
       const { userId, role } = request.currentUser;
 
       if (!body.body) {
@@ -137,23 +154,25 @@ export function ticketRoutes(io: Server) {
         body:      body.body,
         authorId:  userId,
         role,
-        isAiDraft: false, // human reply — AI drafts come from /ai/draft
+        isAiDraft: false,
       });
 
       if (!result.isSuccess) {
         return reply.status(400).send({ error: result.error });
       }
 
-      // Notify everyone viewing this ticket about the new message
-      // e.g. agent is viewing ticket, client sends reply —
-      // agent sees it appear instantly without refreshing
       emitNewMessage(io, id, result.value.message);
 
-      return reply.status(201).send(result.value);
+      return reply.status(201).send({
+        message:   'Reply sent successfully',
+        id:        result.value.message.id,
+        body:      result.value.message.body,
+        authorId:  result.value.message.authorId,
+        createdAt: result.value.message.createdAt,
+      });
     });
 
-    // ── PATCH /tickets/:id/close ───────────────────────────
-    // Close a ticket — only agents and admins can do this
+    // PATCH /tickets/:id/close — close a ticket (agent/admin only)
     app.patch('/tickets/:id/close', {
       preHandler: [authenticate, requireRole(Role.AGENT, Role.ADMIN)]
     }, async (request, reply) => {
@@ -171,10 +190,14 @@ export function ticketRoutes(io: Server) {
         return reply.status(400).send({ error: result.error });
       }
 
-      // Notify all agents the ticket was closed
       emitTicketUpdated(io, organizationId, result.value.ticket);
 
-      return reply.status(200).send(result.value);
+      return reply.status(200).send({
+        message:  'Ticket closed successfully',
+        id:       result.value.ticket.id,
+        status:   result.value.ticket.status,
+        updatedAt: result.value.ticket.updatedAt,
+      });
     });
   };
 }

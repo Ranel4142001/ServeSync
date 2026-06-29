@@ -3,20 +3,19 @@ import { Result }    from '@shared/domain/Result';
 import { Invoice }   from '../domain/Invoice.entity';
 import { IInvoiceRepository } from '../domain/IInvoiceRepository';
 
-// ── Input ────────────────────────────────────────────────
+// Input — organization, amount, and currency to bill
 export interface CreateInvoiceInput {
-  amount:         number;  // e.g. 29.00
-  currency:       string;  // e.g. "USD"
-  description?:   string;  // optional description
-  organizationId: string;  // which org to bill
+  amount:         number;
+  currency:       string;
+  description?:   string;
+  organizationId: string;
 }
 
-// ── Output ───────────────────────────────────────────────
+// Output — the newly created invoice
 export interface CreateInvoiceOutput {
   invoice: ReturnType<Invoice['toJSON']>;
 }
 
-// ── Use-case ─────────────────────────────────────────────
 export class CreateInvoiceUseCase
   implements UseCase<Result<CreateInvoiceOutput>, CreateInvoiceInput>
 {
@@ -26,21 +25,19 @@ export class CreateInvoiceUseCase
 
   async execute(input: CreateInvoiceInput): Promise<Result<CreateInvoiceOutput>> {
 
-    // Step 1 — Create the Invoice entity
-    // If amount is zero or currency is wrong it throws here
+    // 1 — Create the Invoice entity; throws if amount or currency is invalid
     const invoice = Invoice.create({
       amount:         input.amount,
-      currency:       input.currency.toUpperCase(), // always store as uppercase
+      currency:       input.currency.toUpperCase(),
       description:    input.description ?? null,
-      paidAt:         null,  // always starts as unpaid
+      paidAt:         null,
       organizationId: input.organizationId,
       createdAt:      new Date(),
     });
 
-    // Step 2 — Save to database
+    // 2 — Persist and return the saved invoice
     const saved = await this.invoiceRepository.save(invoice);
 
-    // Step 3 — Return the created invoice
     return Result.ok({ invoice: saved.toJSON() });
   }
 }

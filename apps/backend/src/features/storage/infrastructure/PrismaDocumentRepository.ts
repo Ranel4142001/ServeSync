@@ -6,7 +6,7 @@ export class PrismaDocumentRepository implements IDocumentRepository {
 
   constructor(private readonly prisma: PrismaClient) {}
 
-  // Converts raw Prisma row to clean Document entity
+  // Maps a raw Prisma row to a Document entity — only place that knows Prisma's document shape
   private toEntity(raw: any): Document {
     return Document.create(
       {

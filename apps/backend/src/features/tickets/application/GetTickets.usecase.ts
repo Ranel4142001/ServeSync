@@ -1,46 +1,41 @@
-import { UseCase }  from '@shared/application/UseCase';
-import { Result }   from '@shared/domain/Result';
-import { Ticket }   from '../domain/Ticket.entity';
-import { Role }     from '../../auth/domain/Role.enum';
-import { ITicketRepository } from '../domain/ITicketRepository';
+import { UseCase } from "@shared/application/UseCase";
+import { Result } from "@shared/domain/Result";
+import { Ticket } from "../domain/Ticket.entity";
+import { Role } from "../../auth/domain/Role.enum";
+import { ITicketRepository } from "../domain/ITicketRepository";
 
-// ── Input ────────────────────────────────────────────────
+// Input — organizationId, userId, and role from JWT; role determines what the user can see
 export interface GetTicketsInput {
-  organizationId: string; // from JWT token
-  userId:         string; // from JWT token
-  role:           Role;   // from JWT token — determines what they can see
+  organizationId: string;
+  userId: string;
+  role: Role;
 }
 
-// ── Output ───────────────────────────────────────────────
+// Output — list of tickets visible to the requesting user
 export interface GetTicketsOutput {
-  tickets: ReturnType<Ticket['toJSON']>[];
+  tickets: ReturnType<Ticket["toJSON"]>[];
 }
 
-// ── Use-case ─────────────────────────────────────────────
-export class GetTicketsUseCase
-  implements UseCase<Result<GetTicketsOutput>, GetTicketsInput>
-{
-  constructor(
-    private readonly ticketRepository: ITicketRepository,
-  ) {}
+export class GetTicketsUseCase implements UseCase<
+  Result<GetTicketsOutput>,
+  GetTicketsInput
+> {
+  constructor(private readonly ticketRepository: ITicketRepository) {}
 
   async execute(input: GetTicketsInput): Promise<Result<GetTicketsOutput>> {
-
     let tickets: Ticket[];
 
+    // Clients see only their own tickets; agents and admins see all in the organization
     if (input.role === Role.CLIENT) {
-      // Clients can ONLY see their own tickets
-      // They must never see other clients' tickets
       tickets = await this.ticketRepository.findByClientId(input.userId);
     } else {
-      // Agents and Admins can see ALL tickets in the organization
       tickets = await this.ticketRepository.findByOrganizationId(
-        input.organizationId
+        input.organizationId,
       );
     }
 
     return Result.ok({
-      tickets: tickets.map(t => t.toJSON())
+      tickets: tickets.map((t) => t.toJSON()),
     });
   }
 }

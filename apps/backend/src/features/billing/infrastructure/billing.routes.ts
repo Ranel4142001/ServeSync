@@ -9,15 +9,12 @@ import { MarkInvoicePaidUseCase }    from '../application/MarkInvoicePaid.usecas
 
 export async function billingRoutes(app: FastifyInstance): Promise<void> {
 
-  // ── Wire up dependencies ─────────────────────────────────
   const invoiceRepository    = new PrismaInvoiceRepository(prisma);
   const createInvoiceUseCase = new CreateInvoiceUseCase(invoiceRepository);
   const getInvoicesUseCase   = new GetInvoicesUseCase(invoiceRepository);
   const markPaidUseCase      = new MarkInvoicePaidUseCase(invoiceRepository);
 
-  // ── POST /billing/invoices ───────────────────────────────
-  // Create a new invoice for an organization
-  // Only admins can create invoices
+  // POST /billing/invoices — create invoice (admin only)
   app.post('/billing/invoices', {
     preHandler: [authenticate, requireRole(Role.ADMIN)]
   }, async (request, reply) => {
@@ -27,16 +24,10 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
       currency:     string;
       description?: string;
     };
-
-    // Get organizationId from the JWT token
-    // Admin can only create invoices for their own organization
     const { organizationId } = request.currentUser;
 
-    // Validate required fields
     if (!body.amount || !body.currency) {
-      return reply.status(400).send({
-        error: 'Amount and currency are required'
-      });
+      return reply.status(400).send({ error: 'Amount and currency are required' });
     }
 
     const result = await createInvoiceUseCase.execute({
@@ -50,22 +41,20 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(400).send({ error: result.error });
     }
 
-    return reply.status(201).send(result.value);
+    return reply.status(201).send({
+      message: `Invoice created successfully`,
+      id:      result.value.invoice.id,
+      amount:  result.value.invoice.formattedAmount,
+    });
   });
 
-  // ── GET /billing/invoices ────────────────────────────────
-  // Get all invoices for the current organization
-  // Optional query param: ?unpaidOnly=true
-  // Only admins can see invoices
+  // GET /billing/invoices — get all invoices (admin only)
   app.get('/billing/invoices', {
     preHandler: [authenticate, requireRole(Role.ADMIN)]
   }, async (request, reply) => {
 
     const { organizationId, role } = request.currentUser;
-
-    // Check for optional query parameter
-    // e.g. GET /billing/invoices?unpaidOnly=true
-    const query = request.query as { unpaidOnly?: string };
+    const query      = request.query as { unpaidOnly?: string };
     const unpaidOnly = query.unpaidOnly === 'true';
 
     const result = await getInvoicesUseCase.execute({
@@ -78,12 +67,24 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(403).send({ error: result.error });
     }
 
-    return reply.status(200).send(result.value);
+    return reply.status(200).send({
+      invoices: result.value.invoices.map(inv => ({
+        id:          inv.id,
+        amount:      inv.formattedAmount,
+        description: inv.description ?? 'No description',
+        isPaid:      inv.isPaid,
+        paidAt:      inv.paidAt,
+        createdAt:   inv.createdAt,
+      })),
+      summary: {
+        total:       result.value.invoices.length,
+        totalPaid:   `$${result.value.totalPaid.toFixed(2)}`,
+        totalUnpaid: `$${result.value.totalUnpaid.toFixed(2)}`,
+      },
+    });
   });
 
-  // ── PATCH /billing/invoices/:id/pay ─────────────────────
-  // Mark an invoice as paid
-  // Only admins can do this
+  // PATCH /billing/invoices/:id/pay — mark invoice as paid (admin only)
   app.patch('/billing/invoices/:id/pay', {
     preHandler: [authenticate, requireRole(Role.ADMIN)]
   }, async (request, reply) => {
@@ -91,33 +92,39 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
     const { id }   = request.params as { id: string };
     const { role } = request.currentUser;
 
-    const result = await markPaidUseCase.execute({
-      invoiceId: id,
-      role,
-    });
+    const result = await markPaidUseCase.execute({ invoiceId: id, role });
 
     if (!result.isSuccess) {
       return reply.status(400).send({ error: result.error });
     }
 
-    return reply.status(200).send(result.value);
+    return reply.status(200).send({
+      message: 'Invoice marked as paid successfully',
+      id:      result.value.invoice.id,
+      isPaid:  true,
+      paidAt:  result.value.invoice.paidAt,
+    });
   });
 
-  // ── GET /billing/invoices/:id ────────────────────────────
-  // Get a single invoice by ID
-  // Only admins can view individual invoices
+  // GET /billing/invoices/:id — get single invoice detail (admin only)
   app.get('/billing/invoices/:id', {
     preHandler: [authenticate, requireRole(Role.ADMIN)]
   }, async (request, reply) => {
 
     const { id } = request.params as { id: string };
-
     const invoice = await invoiceRepository.findById(id);
 
     if (!invoice) {
       return reply.status(404).send({ error: 'Invoice not found' });
     }
 
-    return reply.status(200).send({ invoice: invoice.toJSON() });
+    return reply.status(200).send({
+      id:          invoice.id,
+      amount:      invoice.formattedAmount,
+      description: invoice.description ?? 'No description',
+      isPaid:      invoice.isPaid,
+      paidAt:      invoice.paidAt,
+      createdAt:   invoice.createdAt,
+    });
   });
 }

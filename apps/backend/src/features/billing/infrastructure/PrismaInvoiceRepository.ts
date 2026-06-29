@@ -1,24 +1,22 @@
-import { PrismaClient }       from '@prisma/client';
-import { IInvoiceRepository } from '../domain/IInvoiceRepository';
-import { Invoice }            from '../domain/Invoice.entity';
+import { PrismaClient } from "@prisma/client";
+import { IInvoiceRepository } from "../domain/IInvoiceRepository";
+import { Invoice } from "../domain/Invoice.entity";
 
 export class PrismaInvoiceRepository implements IInvoiceRepository {
-
   constructor(private readonly prisma: PrismaClient) {}
 
-  // Converts a raw Prisma row into a clean Invoice entity
-  // This is the ONLY place that knows how Prisma stores invoices
+  // Maps a raw Prisma row to an Invoice entity — only place that knows Prisma's invoice shape
   private toEntity(raw: any): Invoice {
     return Invoice.create(
       {
-        amount:         raw.amount,
-        currency:       raw.currency,
-        description:    raw.description,
-        paidAt:         raw.paidAt,
+        amount: raw.amount,
+        currency: raw.currency,
+        description: raw.description,
+        paidAt: raw.paidAt,
         organizationId: raw.organizationId,
-        createdAt:      raw.createdAt,
+        createdAt: raw.createdAt,
       },
-      raw.id
+      raw.id,
     );
   }
 
@@ -30,34 +28,34 @@ export class PrismaInvoiceRepository implements IInvoiceRepository {
 
   async findByOrganizationId(organizationId: string): Promise<Invoice[]> {
     const rows = await this.prisma.invoice.findMany({
-      where:   { organizationId },
-      orderBy: { createdAt: 'desc' }, // newest invoices first
+      where: { organizationId },
+      orderBy: { createdAt: "desc" },
     });
-    return rows.map(row => this.toEntity(row));
+    return rows.map((row) => this.toEntity(row));
   }
 
   async findUnpaidByOrganizationId(organizationId: string): Promise<Invoice[]> {
     const rows = await this.prisma.invoice.findMany({
       where: {
         organizationId,
-        paidAt: null, // null means unpaid in our schema
+        paidAt: null,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
-    return rows.map(row => this.toEntity(row));
+    return rows.map((row) => this.toEntity(row));
   }
 
   async save(invoice: Invoice): Promise<Invoice> {
     const data = {
-      amount:         invoice.amount,
-      currency:       invoice.currency,
-      description:    invoice.description,
-      paidAt:         invoice.paidAt,
+      amount: invoice.amount,
+      currency: invoice.currency,
+      description: invoice.description,
+      paidAt: invoice.paidAt,
       organizationId: invoice.organizationId,
     };
 
     const raw = await this.prisma.invoice.upsert({
-      where:  { id: invoice.id || '' },
+      where: { id: invoice.id || "" },
       update: data,
       create: { ...data, createdAt: new Date() },
     });
