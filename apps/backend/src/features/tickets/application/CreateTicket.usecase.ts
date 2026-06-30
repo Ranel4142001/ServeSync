@@ -4,17 +4,16 @@ import { Ticket }    from '../domain/Ticket.entity';
 import { TicketStatus }   from '../domain/TicketStatus.enum';
 import { TicketPriority } from '../domain/TicketPriority.enum';
 import { ITicketRepository } from '../domain/ITicketRepository';
+import { decodeId } from '@shared/utils/idGenerators'; // Ensure path is correct
 
-// Input — title and optional priority/category; organizationId and clientId from JWT
 export interface CreateTicketInput {
   title:          string;
   priority?:      TicketPriority;
   category?:      string;
-  organizationId: string;
-  clientId:       string;
+  organizationId: string; // e.g. "ORG-0001"
+  clientId:       string; // e.g. "USER-0088"
 }
 
-// Output — the newly created ticket
 export interface CreateTicketOutput {
   ticket: ReturnType<Ticket['toJSON']>;
 }
@@ -27,22 +26,25 @@ export class CreateTicketUseCase
   ) {}
 
   async execute(input: CreateTicketInput): Promise<Result<CreateTicketOutput>> {
+    // 1 — Decode string context identifiers to valid business numbers
+    const numericOrgId = decodeId(input.organizationId);
+    const numericClientId = decodeId(input.clientId);
 
-    // 1 — Create the Ticket entity; status starts as OPEN, priority defaults to MEDIUM
+    // 2 — Create the Ticket entity with numbers under the hood
     const ticket = Ticket.create({
       title:          input.title,
       status:         TicketStatus.OPEN,
       priority:       input.priority ?? TicketPriority.MEDIUM,
       category:       input.category ?? null,
       aiTriage:       null,
-      organizationId: input.organizationId,
-      clientId:       input.clientId,
+      organizationId: numericOrgId,
+      clientId:       numericClientId,
       agentId:        null,
       createdAt:      new Date(),
       updatedAt:      new Date(),
     });
 
-    // 2 — Persist and return the saved ticket
+    // 3 — Persist and return the saved ticket
     const saved = await this.ticketRepository.save(ticket);
 
     return Result.ok({ ticket: saved.toJSON() });

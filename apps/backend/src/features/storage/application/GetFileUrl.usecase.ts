@@ -1,16 +1,15 @@
 import { UseCase }  from '@shared/application/UseCase';
 import { Result }   from '@shared/domain/Result';
-import { IStorageProvider }    from '../domain/IStorageProvider';
+import { IStorageProvider }     from '../domain/IStorageProvider';
 import { IDocumentRepository } from '../domain/IDocumentRepository';
+import { decodeId } from '@shared/utils/idGenerators';
 
-// Input — ID of the document record to generate a URL for
 export interface GetFileUrlInput {
-  documentId: string;
+  documentId: string; // e.g., "DOC-0012"
 }
 
-// Output — signed URL, original file name, and expiry duration
 export interface GetFileUrlOutput {
-  url:       string;
+  url:        string;
   fileName:  string;
   expiresIn: string;
 }
@@ -24,14 +23,16 @@ export class GetFileUrlUseCase
   ) {}
 
   async execute(input: GetFileUrlInput): Promise<Result<GetFileUrlOutput>> {
+    // 1 — Decode the public string handle to an internal integer
+    const numericDocId = decodeId(input.documentId);
 
-    // 1 — Load the document record
-    const document = await this.documentRepository.findById(input.documentId);
+    // 2 — Load the document record
+    const document = await this.documentRepository.findById(numericDocId);
     if (!document) {
       return Result.fail('Document not found');
     }
 
-    // 2 — Generate a signed URL valid for 15 minutes; more secure than a permanent public URL
+    // 3 — Generate a signed URL using the stable S3 key
     const url = await this.storageProvider.getSignedUrl(document.s3Key);
 
     return Result.ok({

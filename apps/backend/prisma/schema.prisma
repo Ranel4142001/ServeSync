@@ -14,7 +14,7 @@ enum Role {
 
 enum TicketStatus {
     OPEN
-    PENDING
+    IN_PROGESS
     RESOLVED
     CLOSED
 }
@@ -27,11 +27,12 @@ enum TicketPriority {
 }
 
 model Organization {
-    id        String    @id @default(cuid())
+    id        Int      @id @default(autoincrement()) // Changed to Int
+    code      String?  @unique
     name      String
-    slug      String    @unique
-    createdAt DateTime  @default(now())
-    updatedAt DateTime  @updatedAt
+    slug      String   @unique
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
     users     User[]
     tickets   Ticket[]
     invoices  Invoice[]
@@ -40,7 +41,7 @@ model Organization {
 }
 
 model User {
-    id           String   @id @default(cuid())
+    id           Int      @id @default(autoincrement()) // Changed to Int
     email        String   @unique
     passwordHash String
     firstName    String
@@ -50,7 +51,7 @@ model User {
     createdAt    DateTime @default(now())
     updatedAt    DateTime @updatedAt
 
-    organizationId String
+    organizationId Int    // Changed to Int
     organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
     assignedTickets Ticket[]  @relation("AgentTickets")
@@ -62,7 +63,7 @@ model User {
 }
 
 model Ticket {
-    id        String         @id @default(cuid())
+    id        Int            @id @default(autoincrement()) // Changed to Int
     title     String
     status    TicketStatus   @default(OPEN)
     priority  TicketPriority @default(MEDIUM)
@@ -71,13 +72,13 @@ model Ticket {
     createdAt DateTime       @default(now())
     updatedAt DateTime       @updatedAt
 
-    organizationId String
+    organizationId Int    // Changed to Int
     organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-    clientId String?
+    clientId Int?        // Changed to Int?
     client   User?  @relation("ClientTickets", fields: [clientId], references: [id], onDelete: SetNull)
 
-    agentId String?
+    agentId Int?         // Changed to Int?
     agent   User?   @relation("AgentTickets", fields: [agentId], references: [id], onDelete: SetNull)
 
     messages  Message[]
@@ -91,15 +92,15 @@ model Ticket {
 }
 
 model Message {
-    id        String   @id @default(cuid())
+    id        Int      @id @default(autoincrement()) // Changed to Int
     body      String
     isAiDraft Boolean  @default(false)
     createdAt DateTime @default(now())
 
-    ticketId String
+    ticketId Int       // Changed to Int
     ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
-    authorId String?
+    authorId Int?      // Changed to Int?
     author   User?  @relation(fields: [authorId], references: [id], onDelete: SetNull)
 
     @@index([ticketId, createdAt])
@@ -108,7 +109,7 @@ model Message {
 }
 
 model Document {
-    id        String   @id @default(cuid())
+    id        Int      @id @default(autoincrement()) // Changed to Int
     fileName  String
     s3Key     String
     mimeType  String
@@ -116,7 +117,7 @@ model Document {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    ticketId String
+    ticketId Int       // Changed to Int
     ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
     @@index([ticketId, createdAt])
@@ -124,14 +125,15 @@ model Document {
 }
 
 model Invoice {
-    id          String    @id @default(cuid())
+    id          Int       @id @default(autoincrement()) // Changed to Int
+    number      String?   @unique
     amount      Float
     currency    String    @default("USD")
     description String?
     paidAt      DateTime?
     createdAt   DateTime  @default(now())
 
-    organizationId String
+    organizationId Int    // Changed to Int
     organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
     @@index([organizationId])

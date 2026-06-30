@@ -3,14 +3,13 @@ import { Result }   from '@shared/domain/Result';
 import { IAIProvider }       from '../domain/IAIProvider';
 import { ITicketRepository } from '../../tickets/domain/ITicketRepository';
 import { IUserRepository }   from '../../auth/domain/IUserRepository';
+import { decodeId } from '@shared/utils/idGenerators';
 
-// Input — ticket and agent requesting the draft
 export interface DraftResponseInput {
   ticketId: string;
   agentId:  string;
 }
 
-// Output — suggested reply text for the agent to review before sending
 export interface DraftResponseOutput {
   draft: string;
 }
@@ -25,26 +24,29 @@ export class DraftResponseUseCase
   ) {}
 
   async execute(input: DraftResponseInput): Promise<Result<DraftResponseOutput>> {
+    // 1 — Decode IDs
+    const numericTicketId = decodeId(input.ticketId);
+    // Even if unused currently, decoding the agentId is good practice for future audit logs
+    const numericAgentId = decodeId(input.agentId);
 
-    // 1 — Load the ticket
-    const ticket = await this.ticketRepository.findById(input.ticketId);
+    // 2 — Load the ticket
+    const ticket = await this.ticketRepository.findById(numericTicketId);
     if (!ticket) {
       return Result.fail('Ticket not found');
     }
 
-    // 2 — Load all messages on the ticket
-    const messages = await this.ticketRepository.findMessagesByTicketId(
-      input.ticketId
-    );
+    // 3 — Load all messages on the ticket
+    const messages = await this.ticketRepository.findMessagesByTicketId(numericTicketId);
 
     if (messages.length === 0) {
       return Result.fail('No messages found on this ticket');
     }
 
-    // 3 — Label each message as 'client' or 'agent' so the AI understands the conversation flow
+    // 4 — Map messages
     const conversationForAI = await Promise.all(
       messages.map(async (message) => {
-        const author = await this.userRepository.findById(message.authorId);
+        // authorId is now a number in your new architecture
+        const author = await this.userRepository.findById(message.authorId.toString());
         const role   = author?.isClient() ? 'client' : 'agent';
 
         return {
@@ -54,7 +56,7 @@ export class DraftResponseUseCase
       })
     );
 
-    // 4 — Extract category from aiTriage if available, fall back to 'General'
+    // 5 — Category extraction
     let category = 'General';
     if (ticket.aiTriage) {
       try {
@@ -65,7 +67,7 @@ export class DraftResponseUseCase
       }
     }
 
-    // 5 — Ask the AI to draft a response; agent reviews and edits before sending
+    // 6 — AI Generation
     const result = await this.aiProvider.draftResponse({
       ticketTitle:    ticket.title,
       ticketCategory: category,

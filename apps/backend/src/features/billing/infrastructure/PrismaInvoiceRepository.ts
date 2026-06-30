@@ -5,28 +5,29 @@ import { Invoice } from "../domain/Invoice.entity";
 export class PrismaInvoiceRepository implements IInvoiceRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  // Maps a raw Prisma row to an Invoice entity — only place that knows Prisma's invoice shape
+  // Maps a raw Prisma row to an Invoice entity
   private toEntity(raw: any): Invoice {
     return Invoice.create(
       {
+        number: raw.number,
         amount: raw.amount,
         currency: raw.currency,
         description: raw.description,
         paidAt: raw.paidAt,
-        organizationId: raw.organizationId,
+        organizationId: raw.organizationId, // Maps as a number
         createdAt: raw.createdAt,
       },
-      raw.id,
+      raw.id, // raw.id is an integer
     );
   }
 
-  async findById(id: string): Promise<Invoice | null> {
+  async findById(id: number): Promise<Invoice | null> {
     const raw = await this.prisma.invoice.findUnique({ where: { id } });
     if (!raw) return null;
     return this.toEntity(raw);
   }
 
-  async findByOrganizationId(organizationId: string): Promise<Invoice[]> {
+  async findByOrganizationId(organizationId: number): Promise<Invoice[]> {
     const rows = await this.prisma.invoice.findMany({
       where: { organizationId },
       orderBy: { createdAt: "desc" },
@@ -34,7 +35,7 @@ export class PrismaInvoiceRepository implements IInvoiceRepository {
     return rows.map((row) => this.toEntity(row));
   }
 
-  async findUnpaidByOrganizationId(organizationId: string): Promise<Invoice[]> {
+  async findUnpaidByOrganizationId(organizationId: number): Promise<Invoice[]> {
     const rows = await this.prisma.invoice.findMany({
       where: {
         organizationId,
@@ -47,19 +48,32 @@ export class PrismaInvoiceRepository implements IInvoiceRepository {
 
   async save(invoice: Invoice): Promise<Invoice> {
     const data = {
-      amount: invoice.amount,
-      currency: invoice.currency,
-      description: invoice.description,
-      paidAt: invoice.paidAt,
+      amount:         invoice.amount,
+      currency:       invoice.currency,
+      description:    invoice.description,
+      paidAt:         invoice.paidAt,
       organizationId: invoice.organizationId,
     };
 
-    const raw = await this.prisma.invoice.upsert({
-      where: { id: invoice.id || "" },
-      update: data,
-      create: { ...data, createdAt: new Date() },
-    });
+    // If id > 0, execute database updates
+    if (invoice.id && invoice.id > 0) {
+      const raw = await this.prisma.invoice.update({
+        where: { id: invoice.id },
+        data,
+      });
+      return this.toEntity(raw);
+    }
 
+    // New invoice creation — clean database write without manual loops!
+    // If you have a matching `number` column in your DB schema, we pass invoice.number (or null)
+    // and let our global Prisma computed extension output 'INV-2026-0000X' cleanly later.
+    const raw = await this.prisma.invoice.create({
+      data: {
+        number:    invoice.number,
+        ...data,
+        createdAt: new Date(),
+      },
+    });
     return this.toEntity(raw);
   }
 }

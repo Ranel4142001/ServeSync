@@ -2,24 +2,25 @@ import { Entity } from "@shared/domain/Entity";
 
 // Shape of data required to construct an Invoice
 interface InvoiceProps {
+  number: string | null; // e.g. "INV-2026-00001" (Calculated/Formatted string)
   amount: number;
   currency: string;
   description: string | null;
-  paidAt: Date | null; // null = unpaid, Date = paid
-  organizationId: string;
+  paidAt: Date | null; 
+  organizationId: number; // Changed to number to match Organization entity
   createdAt: Date;
 }
 
-export class Invoice extends Entity<string> {
+export class Invoice extends Entity<number> { // Changed generic identifier to number
   private props: InvoiceProps;
 
-  private constructor(props: InvoiceProps, id?: string) {
-    super(id ?? "");
+  private constructor(props: InvoiceProps, id?: number) {
+    super(id ?? 0); // Defaults to 0 for database auto-increment
     this.props = props;
   }
 
   // Factory method — validates amount, currency, and organizationId before creating
-  static create(props: InvoiceProps, id?: string): Invoice {
+  static create(props: InvoiceProps, id?: number): Invoice {
     if (props.amount <= 0) {
       throw new Error("Invoice amount must be greater than zero");
     }
@@ -33,14 +34,17 @@ export class Invoice extends Entity<string> {
       throw new Error("Currency must be a 3-letter code e.g. USD, PHP, EUR");
     }
 
-    if (!props.organizationId || props.organizationId.trim().length === 0) {
-      throw new Error("Organization ID is required");
+    if (!props.organizationId || props.organizationId <= 0) {
+      throw new Error("Valid Organization ID is required");
     }
 
     return new Invoice(props, id);
   }
 
   // Getters
+  get number(): string | null {
+    return this.props.number;
+  }
   get amount(): number {
     return this.props.amount;
   }
@@ -53,7 +57,7 @@ export class Invoice extends Entity<string> {
   get paidAt(): Date | null {
     return this.props.paidAt;
   }
-  get organizationId(): string {
+  get organizationId(): number { // Returns number
     return this.props.organizationId;
   }
   get createdAt(): Date {
@@ -84,14 +88,15 @@ export class Invoice extends Entity<string> {
   // Serialize to plain object for persistence or HTTP response
   toJSON() {
     return {
-      id: this._id,
+      id: this._id, // This is now a number
+      number: this.props.number,
       amount: this.props.amount,
       currency: this.props.currency,
       formattedAmount: this.formattedAmount,
       description: this.props.description,
       isPaid: this.isPaid,
       paidAt: this.props.paidAt,
-      organizationId: this.props.organizationId,
+      organizationId: this.props.organizationId, // This is now a number
       createdAt: this.props.createdAt,
     };
   }

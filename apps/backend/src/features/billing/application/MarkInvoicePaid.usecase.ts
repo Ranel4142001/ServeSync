@@ -3,14 +3,13 @@ import { Result } from "@shared/domain/Result";
 import { Invoice } from "../domain/Invoice.entity";
 import { Role } from "../../auth/domain/Role.enum";
 import { IInvoiceRepository } from "../domain/IInvoiceRepository";
+import { decodeId } from "@shared/utils/idGenerators";
 
-// Input — invoiceId to mark paid; role from JWT to guard admin-only access
 export interface MarkInvoicePaidInput {
-  invoiceId: string;
+  invoiceId: string; // e.g., "INV-0042"
   role: Role;
 }
 
-// Output — the updated invoice
 export interface MarkInvoicePaidOutput {
   invoice: ReturnType<Invoice["toJSON"]>;
 }
@@ -24,18 +23,21 @@ export class MarkInvoicePaidUseCase implements UseCase<
   async execute(
     input: MarkInvoicePaidInput,
   ): Promise<Result<MarkInvoicePaidOutput>> {
-    // 1 — Only admins can mark invoices as paid
+    // 1 — Decode the invoice ID
+    const numericInvoiceId = decodeId(input.invoiceId);
+
+    // 2 — Authorization check
     if (input.role !== Role.ADMIN) {
       return Result.fail("Only admins can mark invoices as paid");
     }
 
-    // 2 — Load the invoice
-    const invoice = await this.invoiceRepository.findById(input.invoiceId);
+    // 3 — Load the invoice
+    const invoice = await this.invoiceRepository.findById(numericInvoiceId);
     if (!invoice) {
       return Result.fail("Invoice not found");
     }
 
-    // 3 — Mark as paid; throws if already paid
+    // 4 — Domain logic: Mark as paid
     try {
       invoice.markAsPaid();
     } catch (error: unknown) {
@@ -46,7 +48,7 @@ export class MarkInvoicePaidUseCase implements UseCase<
       return Result.fail(message);
     }
 
-    // 4 — Persist and return the updated invoice
+    // 5 — Persist updated state
     const saved = await this.invoiceRepository.save(invoice);
 
     return Result.ok({ invoice: saved.toJSON() });

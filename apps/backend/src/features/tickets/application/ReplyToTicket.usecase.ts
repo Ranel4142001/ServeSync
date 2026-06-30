@@ -3,17 +3,16 @@ import { Result } from "@shared/domain/Result";
 import { Message } from "../domain/Message.entity";
 import { Role } from "../../auth/domain/Role.enum";
 import { ITicketRepository } from "../domain/ITicketRepository";
+import { decodeId } from "@shared/utils/idGenerators";
 
-// Input — ticket to reply to, message body, and author identity from JWT
 export interface ReplyToTicketInput {
-  ticketId: string;
+  ticketId: string; // e.g., "TICKET-0451"
   body: string;
-  authorId: string;
+  authorId: string; // e.g., "USER-0012"
   role: Role;
   isAiDraft: boolean;
 }
 
-// Output — the saved message
 export interface ReplyToTicketOutput {
   message: ReturnType<Message["toJSON"]>;
 }
@@ -27,8 +26,12 @@ export class ReplyToTicketUseCase implements UseCase<
   async execute(
     input: ReplyToTicketInput,
   ): Promise<Result<ReplyToTicketOutput>> {
+    // Clean parsing step
+    const numericTicketId = decodeId(input.ticketId);
+    const numericAuthorId = decodeId(input.authorId);
+
     // 1 — Load the ticket
-    const ticket = await this.ticketRepository.findById(input.ticketId);
+    const ticket = await this.ticketRepository.findById(numericTicketId);
     if (!ticket) {
       return Result.fail("Ticket not found");
     }
@@ -38,12 +41,12 @@ export class ReplyToTicketUseCase implements UseCase<
       return Result.fail("Cannot reply to a closed ticket");
     }
 
-    // 3 — Create the message entity and persist it
+    // 3 — Create the message entity with numeric values and persist it
     const message = Message.create({
       body: input.body,
       isAiDraft: input.isAiDraft,
-      ticketId: input.ticketId,
-      authorId: input.authorId,
+      ticketId: numericTicketId,
+      authorId: numericAuthorId,
       createdAt: new Date(),
     });
 

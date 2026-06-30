@@ -3,15 +3,15 @@ import { Result } from "@shared/domain/Result";
 import { Ticket } from "../domain/Ticket.entity";
 import { Role } from "../../auth/domain/Role.enum";
 import { ITicketRepository } from "../domain/ITicketRepository";
+import { decodeId } from "@shared/utils/idGenerators";
 
-// Input — ticket to close and the user requesting it
+// Input uses string handles from HTTP context
 export interface CloseTicketInput {
-  ticketId: string;
-  userId: string;
+  ticketId: string; // e.g., "TICKET-0102"
+  userId: string;   // e.g., "USER-0045"
   role: Role;
 }
 
-// Output — the updated ticket
 export interface CloseTicketOutput {
   ticket: ReturnType<Ticket["toJSON"]>;
 }
@@ -23,8 +23,11 @@ export class CloseTicketUseCase implements UseCase<
   constructor(private readonly ticketRepository: ITicketRepository) {}
 
   async execute(input: CloseTicketInput): Promise<Result<CloseTicketOutput>> {
-    // 1 — Load the ticket
-    const ticket = await this.ticketRepository.findById(input.ticketId);
+    // Decode incoming string elements to core integers
+    const numericTicketId = decodeId(input.ticketId);
+
+    // 1 — Load the ticket using the numeric ID
+    const ticket = await this.ticketRepository.findById(numericTicketId);
     if (!ticket) {
       return Result.fail("Ticket not found");
     }
