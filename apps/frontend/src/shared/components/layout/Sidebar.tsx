@@ -24,7 +24,7 @@ const navConfig: Record<string, NavItem[]> = {
     { section: 'Billing' },
     { icon: 'ti-file-invoice',     label: 'Invoices',      path: '/admin/billing',       badge: '1' },
     { section: 'Settings' },
-    { icon: 'ti-robot',            label: 'AI settings',   path: '/admin/ai' },
+    { icon: 'ti-robot',            label: 'AI settings',   path: '/admin/ai-settings' },
     { icon: 'ti-settings',         label: 'Settings',      path: '/admin/settings' },
   ],
   AGENT: [

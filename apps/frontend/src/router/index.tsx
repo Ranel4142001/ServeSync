@@ -5,6 +5,12 @@ import { RegisterPage } from '@features/auth/components/RegisterPage';
 import { AdminDashboard }  from '@features/dashboard/pages/AdminDashboard';
 import { AgentDashboard }  from '@features/dashboard/pages/AgentDashboard';
 import { ClientDashboard } from '@features/dashboard/pages/ClientDashboard';
+import { AdminTicketsPage }       from '@features/tickets/pages/AdminTicketsPage';
+import { AdminUsersPage }         from '@features/users/pages/AdminUsersPage';
+import { AdminOrganizationsPage } from '@features/organizations/pages/AdminOrganizationsPage';
+import { AdminInvoicesPage }      from '@features/billing/pages/AdminInvoicesPage';
+import { AdminAiSettingsPage }    from '@features/ai/pages/AdminAiSettingsPage';
+import { AdminSettingsPage }      from '@features/settings/pages/AdminSettingsPage';
 
 // ── Protected Route ──────────────────────────────────────
 // Wraps any route that requires the user to be logged in
@@ -63,6 +69,43 @@ export function AppRouter() {
         <Route path="/admin/dashboard" element={
           <ProtectedRoute>
             <AdminDashboard />
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/admin/tickets" element={
+          <ProtectedRoute>
+            <AdminTicketsPage />
+          </ProtectedRoute>
+        }/>
+
+        {/* Admin management pages */}
+        <Route path="/admin/users" element={
+          <ProtectedRoute>
+            <AdminUsersPage />
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/admin/organizations" element={
+          <ProtectedRoute>
+            <AdminOrganizationsPage />
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/admin/billing" element={
+          <ProtectedRoute>
+            <AdminInvoicesPage />
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/admin/ai-settings" element={
+          <ProtectedRoute>
+            <AdminAiSettingsPage />
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/admin/settings" element={
+          <ProtectedRoute>
+            <AdminSettingsPage />
           </ProtectedRoute>
         }/>
 

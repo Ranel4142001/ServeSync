@@ -6,7 +6,7 @@ import { RefreshTokenUseCase } from '../application/RefreshToken.usecase';
 import { PrismaUserRepository } from './PrismaUserRepository';
 import { BcryptHashService }    from './BcryptHashService';
 import { JwtService }           from './JwtService';
-import { authenticate }         from './rbac.middleware';
+import { authenticate, requireRole } from './rbac.middleware';
 import { Role } from '../domain/Role.enum';
 
 export async function authRoutes(app: FastifyInstance): Promise<void> {
@@ -106,6 +106,28 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       email:          request.currentUser.email,
       role:           request.currentUser.role,
       organizationId: request.currentUser.organizationId,
+    });
+  });
+
+  // GET /auth/users — list all users in the organization (admin only)
+  // Used by the admin Users page to manage team members
+  app.get('/auth/users', {
+    preHandler: [authenticate, requireRole(Role.ADMIN)]
+  }, async (request, reply) => {
+    const { organizationId } = request.currentUser;
+
+    const users = await userRepository.findByOrganizationId(organizationId);
+
+    return reply.status(200).send({
+      users: users.map(u => ({
+        id:        u.id,
+        email:     u.email,
+        fullName:  u.fullName,
+        role:      u.role,
+        isActive:  u.isActive,
+        createdAt: u.createdAt,
+      })),
+      total: users.length,
     });
   });
 }
