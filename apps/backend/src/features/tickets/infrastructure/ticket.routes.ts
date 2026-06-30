@@ -66,6 +66,7 @@ export function ticketRoutes(io: Server) {
     });
 
     // GET /tickets — get all tickets (role-based)
+    // Response is enriched with agent names at this layer (adapter concern, not domain)
     app.get('/tickets', {
       preHandler: [authenticate]
     }, async (request, reply) => {
@@ -82,14 +83,39 @@ export function ticketRoutes(io: Server) {
         return reply.status(400).send({ error: result.error });
       }
 
+      // Collect all user IDs we need names for (agents + clients)
+      // One batch query for both — DRY, avoids separate lookups
+      const userIds = [...new Set(
+        result.value.tickets
+          .flatMap(t => [t.agentId, t.clientId])
+          .filter((id): id is string => id !== null)
+      )];
+
+      // Single query to get all user names
+      const users = userIds.length > 0
+        ? await prisma.user.findMany({
+            where:  { id: { in: userIds } },
+            select: { id: true, firstName: true, lastName: true },
+          })
+        : [];
+
+      // Lookup map: userId → "FirstName LastName"
+      const nameMap = new Map(
+        users.map(u => [u.id, `${u.firstName} ${u.lastName}`])
+      );
+
       return reply.status(200).send({
         tickets: result.value.tickets.map(ticket => ({
-          id:        ticket.id,
-          title:     ticket.title,
-          status:    ticket.status,
-          priority:  ticket.priority,
-          category:  ticket.category ?? 'Uncategorized',
-          createdAt: ticket.createdAt,
+          id:         ticket.id,
+          title:      ticket.title,
+          status:     ticket.status,
+          priority:   ticket.priority,
+          category:   ticket.category ?? 'Uncategorized',
+          agentId:    ticket.agentId,
+          agentName:  ticket.agentId  ? nameMap.get(ticket.agentId)  ?? null : null,
+          clientId:   ticket.clientId,
+          clientName: ticket.clientId ? nameMap.get(ticket.clientId) ?? null : null,
+          createdAt:  ticket.createdAt,
         })),
         total: result.value.tickets.length,
       });
