@@ -8,6 +8,7 @@ import { BcryptHashService }    from './BcryptHashService';
 import { JwtService }           from './JwtService';
 import { authenticate, requireRole } from './rbac.middleware';
 import { Role } from '../domain/Role.enum';
+import { decodeId } from '@shared/utils/idGenerators';
 
 export async function authRoutes(app: FastifyInstance): Promise<void> {
 

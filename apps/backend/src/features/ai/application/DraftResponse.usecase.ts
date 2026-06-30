@@ -46,7 +46,7 @@ export class DraftResponseUseCase
     const conversationForAI = await Promise.all(
       messages.map(async (message) => {
         // authorId is now a number in your new architecture
-        const author = await this.userRepository.findById(message.authorId.toString());
+        const author = await this.userRepository.findById(message.authorId);
         const role   = author?.isClient() ? 'client' : 'agent';
 
         return {

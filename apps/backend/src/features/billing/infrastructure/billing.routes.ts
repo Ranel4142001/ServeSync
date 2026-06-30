@@ -6,6 +6,7 @@ import { PrismaInvoiceRepository }   from './PrismaInvoiceRepository';
 import { CreateInvoiceUseCase }      from '../application/CreateInvoice.usecase';
 import { GetInvoicesUseCase }        from '../application/GetInvoices.usecase';
 import { MarkInvoicePaidUseCase }    from '../application/MarkInvoicePaid.usecase';
+import { decodeId } from '@shared/utils/idGenerators';
 
 export async function billingRoutes(app: FastifyInstance): Promise<void> {
 
@@ -112,7 +113,7 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
   }, async (request, reply) => {
 
     const { id } = request.params as { id: string };
-    const invoice = await invoiceRepository.findById(id);
+    const invoice = await invoiceRepository.findById(decodeId(id));
 
     if (!invoice) {
       return reply.status(404).send({ error: 'Invoice not found' });

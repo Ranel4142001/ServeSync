@@ -34,5 +34,6 @@ export const prisma = basePrisma.$extends({
   }
 });
 
+export type ExtendedPrismaClient = typeof prisma;
 // 3. Export the extended client as default so your existing code continues to work seamlessly
 export default prisma;
