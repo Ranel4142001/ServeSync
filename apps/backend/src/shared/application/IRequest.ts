@@ -1,4 +1,4 @@
 export interface IRequest {
-  userId: string;
+  userId: number;
   payload: unknown;
 }

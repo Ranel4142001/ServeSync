@@ -9,6 +9,7 @@
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
+    "skipLibCheck": true,
     "paths": {
       "@shared/*": ["./src/shared/*"],
       "@features/*": ["./src/features/*"]

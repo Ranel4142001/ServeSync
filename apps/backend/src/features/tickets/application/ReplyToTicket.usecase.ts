@@ -4,16 +4,14 @@ import { Message } from "../domain/Message.entity";
 import { Role } from "../../auth/domain/Role.enum";
 import { ITicketRepository } from "../domain/ITicketRepository";
 
-// Input — ticket to reply to, message body, and author identity from JWT
 export interface ReplyToTicketInput {
-  ticketId: string;
+  ticketId: number;
   body: string;
-  authorId: string;
+  authorId: number;
   role: Role;
   isAiDraft: boolean;
 }
 
-// Output — the saved message
 export interface ReplyToTicketOutput {
   message: ReturnType<Message["toJSON"]>;
 }

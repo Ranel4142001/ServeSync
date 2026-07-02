@@ -4,14 +4,12 @@ import { Ticket } from "../domain/Ticket.entity";
 import { Role } from "../../auth/domain/Role.enum";
 import { ITicketRepository } from "../domain/ITicketRepository";
 
-// Input — ticket to close and the user requesting it
 export interface CloseTicketInput {
-  ticketId: string;
-  userId: string;
+  ticketId: number;
+  userId: number;
   role: Role;
 }
 
-// Output — the updated ticket
 export interface CloseTicketOutput {
   ticket: ReturnType<Ticket["toJSON"]>;
 }

@@ -5,15 +5,13 @@ import { Message }  from '../domain/Message.entity';
 import { Role }     from '../../auth/domain/Role.enum';
 import { ITicketRepository } from '../domain/ITicketRepository';
 
-// Input — ticket to fetch and the requesting user's identity for access checks
 export interface GetTicketByIdInput {
-  ticketId:       string;
-  userId:         string;
+  ticketId:       number;
+  userId:         number;
   role:           Role;
-  organizationId: string;
+  organizationId: number;
 }
 
-// Output — the ticket and its full message history
 export interface GetTicketByIdOutput {
   ticket:   ReturnType<Ticket['toJSON']>;
   messages: ReturnType<Message['toJSON']>[];
@@ -27,7 +25,6 @@ export class GetTicketByIdUseCase
   ) {}
 
   async execute(input: GetTicketByIdInput): Promise<Result<GetTicketByIdOutput>> {
-
     // 1 — Load the ticket
     const ticket = await this.ticketRepository.findById(input.ticketId);
     if (!ticket) {
@@ -51,9 +48,7 @@ export class GetTicketByIdUseCase
     }
 
     // 4 — Load and return the ticket with its messages
-    const messages = await this.ticketRepository.findMessagesByTicketId(
-      input.ticketId
-    );
+    const messages = await this.ticketRepository.findMessagesByTicketId(input.ticketId);
 
     return Result.ok({
       ticket:   ticket.toJSON(),

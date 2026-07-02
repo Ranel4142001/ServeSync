@@ -4,14 +4,12 @@ import { Ticket } from "../domain/Ticket.entity";
 import { Role } from "../../auth/domain/Role.enum";
 import { ITicketRepository } from "../domain/ITicketRepository";
 
-// Input — organizationId, userId, and role from JWT; role determines what the user can see
 export interface GetTicketsInput {
-  organizationId: string;
-  userId: string;
+  organizationId: number;
+  userId: number;
   role: Role;
 }
 
-// Output — list of tickets visible to the requesting user
 export interface GetTicketsOutput {
   tickets: ReturnType<Ticket["toJSON"]>[];
 }
@@ -29,9 +27,7 @@ export class GetTicketsUseCase implements UseCase<
     if (input.role === Role.CLIENT) {
       tickets = await this.ticketRepository.findByClientId(input.userId);
     } else {
-      tickets = await this.ticketRepository.findByOrganizationId(
-        input.organizationId,
-      );
+      tickets = await this.ticketRepository.findByOrganizationId(input.organizationId);
     }
 
     return Result.ok({

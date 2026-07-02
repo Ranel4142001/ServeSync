@@ -3,23 +3,22 @@ import { Entity } from "@shared/domain/Entity";
 // Shape of data required to construct a Document
 interface DocumentProps {
   fileName: string;
-  s3Key: string; // unique path inside the S3 bucket
+  s3Key: string; 
   mimeType: string;
   sizeBytes: number;
-  ticketId: string;
+  ticketId: number; // Changed to number
   createdAt: Date;
 }
 
-export class Document extends Entity<string> {
+export class Document extends Entity<number> { // Changed to number
   private props: DocumentProps;
 
-  private constructor(props: DocumentProps, id?: string) {
-    super(id ?? "");
+  private constructor(props: DocumentProps, id?: number) {
+    super(id ?? 0); // Defaults to 0
     this.props = props;
   }
 
-  // Factory method — validates fileName, s3Key, mimeType, and size before creating
-  static create(props: DocumentProps, id?: string): Document {
+  static create(props: DocumentProps, id?: number): Document {
     if (!props.fileName || props.fileName.trim().length === 0) {
       throw new Error("File name is required");
     }
@@ -36,7 +35,11 @@ export class Document extends Entity<string> {
       throw new Error("File size must be greater than zero");
     }
 
-    // Max file size is 10MB (10 * 1024 * 1024)
+    if (props.ticketId <= 0) {
+      throw new Error("A valid Ticket ID is required");
+    }
+
+    // Max file size is 10MB
     const MAX_SIZE = 10 * 1024 * 1024;
     if (props.sizeBytes > MAX_SIZE) {
       throw new Error("File size must not exceed 10MB");
@@ -46,26 +49,13 @@ export class Document extends Entity<string> {
   }
 
   // Getters
-  get fileName(): string {
-    return this.props.fileName;
-  }
-  get s3Key(): string {
-    return this.props.s3Key;
-  }
-  get mimeType(): string {
-    return this.props.mimeType;
-  }
-  get sizeBytes(): number {
-    return this.props.sizeBytes;
-  }
-  get ticketId(): string {
-    return this.props.ticketId;
-  }
-  get createdAt(): Date {
-    return this.props.createdAt;
-  }
+  get fileName(): string { return this.props.fileName; }
+  get s3Key(): string { return this.props.s3Key; }
+  get mimeType(): string { return this.props.mimeType; }
+  get sizeBytes(): number { return this.props.sizeBytes; }
+  get ticketId(): number { return this.props.ticketId; }
+  get createdAt(): Date { return this.props.createdAt; }
 
-  // Converts raw bytes to a human-readable size e.g. 204800 → "200 KB"
   get humanSize(): string {
     if (this.props.sizeBytes < 1024) {
       return `${this.props.sizeBytes} B`;
@@ -76,7 +66,6 @@ export class Document extends Entity<string> {
     }
   }
 
-  // Serialize to plain object for HTTP responses
   toJSON() {
     return {
       id: this._id,
@@ -85,7 +74,7 @@ export class Document extends Entity<string> {
       mimeType: this.props.mimeType,
       sizeBytes: this.props.sizeBytes,
       humanSize: this.humanSize,
-      ticketId: this.props.ticketId,
+      ticketId: this.props.ticketId, // Now number
       createdAt: this.props.createdAt,
     };
   }

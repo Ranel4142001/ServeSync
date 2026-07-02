@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useAuthStore } from '@/features/auth/stores/auth.store';
-import { LoginPage }    from '@features/auth/components/LoginPage';
-import { RegisterPage } from '@features/auth/components/RegisterPage';
-import { AdminDashboard }  from '@features/dashboard/pages/AdminDashboard';
-import { AgentDashboard }  from '@features/dashboard/pages/AgentDashboard';
-import { ClientDashboard } from '@features/dashboard/pages/ClientDashboard';
+import { useAuthStore, LoginPage, RegisterPage } from '@/features/auth';
+import { AdminDashboard, AgentDashboard, ClientDashboard } from '@/features/dashboard';
+import { AdminTicketsPage } from '@/features/tickets';
+import { AdminUsersPage } from '@/features/users';
+import { AdminOrganizationsPage } from '@/features/organizations';
+import { AdminInvoicesPage } from '@/features/billing';
+import { AdminAiSettingsPage } from '@/features/ai';
+import { AdminSettingsPage } from '@/features/settings';
 
 // ── Protected Route ──────────────────────────────────────
 // Wraps any route that requires the user to be logged in
@@ -63,6 +65,43 @@ export function AppRouter() {
         <Route path="/admin/dashboard" element={
           <ProtectedRoute>
             <AdminDashboard />
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/admin/tickets" element={
+          <ProtectedRoute>
+            <AdminTicketsPage />
+          </ProtectedRoute>
+        }/>
+
+        {/* Admin management pages */}
+        <Route path="/admin/users" element={
+          <ProtectedRoute>
+            <AdminUsersPage />
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/admin/organizations" element={
+          <ProtectedRoute>
+            <AdminOrganizationsPage />
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/admin/billing" element={
+          <ProtectedRoute>
+            <AdminInvoicesPage />
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/admin/ai-settings" element={
+          <ProtectedRoute>
+            <AdminAiSettingsPage />
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/admin/settings" element={
+          <ProtectedRoute>
+            <AdminSettingsPage />
           </ProtectedRoute>
         }/>
 

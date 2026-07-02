@@ -4,13 +4,11 @@ import { IAIProvider }       from '../domain/IAIProvider';
 import { ITicketRepository } from '../../tickets/domain/ITicketRepository';
 import { IUserRepository }   from '../../auth/domain/IUserRepository';
 
-// Input — ticket and agent requesting the draft
 export interface DraftResponseInput {
-  ticketId: string;
-  agentId:  string;
+  ticketId: number;
+  agentId:  number;
 }
 
-// Output — suggested reply text for the agent to review before sending
 export interface DraftResponseOutput {
   draft: string;
 }
@@ -25,7 +23,6 @@ export class DraftResponseUseCase
   ) {}
 
   async execute(input: DraftResponseInput): Promise<Result<DraftResponseOutput>> {
-
     // 1 — Load the ticket
     const ticket = await this.ticketRepository.findById(input.ticketId);
     if (!ticket) {
@@ -33,15 +30,13 @@ export class DraftResponseUseCase
     }
 
     // 2 — Load all messages on the ticket
-    const messages = await this.ticketRepository.findMessagesByTicketId(
-      input.ticketId
-    );
+    const messages = await this.ticketRepository.findMessagesByTicketId(input.ticketId);
 
     if (messages.length === 0) {
       return Result.fail('No messages found on this ticket');
     }
 
-    // 3 — Label each message as 'client' or 'agent' so the AI understands the conversation flow
+    // 3 — Map messages
     const conversationForAI = await Promise.all(
       messages.map(async (message) => {
         const author = await this.userRepository.findById(message.authorId);
@@ -54,7 +49,7 @@ export class DraftResponseUseCase
       })
     );
 
-    // 4 — Extract category from aiTriage if available, fall back to 'General'
+    // 4 — Category extraction
     let category = 'General';
     if (ticket.aiTriage) {
       try {
@@ -65,7 +60,7 @@ export class DraftResponseUseCase
       }
     }
 
-    // 5 — Ask the AI to draft a response; agent reviews and edits before sending
+    // 5 — AI Generation
     const result = await this.aiProvider.draftResponse({
       ticketTitle:    ticket.title,
       ticketCategory: category,

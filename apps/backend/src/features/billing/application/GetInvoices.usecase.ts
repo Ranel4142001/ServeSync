@@ -4,14 +4,12 @@ import { Invoice } from "../domain/Invoice.entity";
 import { Role } from "../../auth/domain/Role.enum";
 import { IInvoiceRepository } from "../domain/IInvoiceRepository";
 
-// Input — organizationId and role from JWT; optional filter for unpaid only
 export interface GetInvoicesInput {
-  organizationId: string;
+  organizationId: number;
   role: Role;
   unpaidOnly?: boolean;
 }
 
-// Output — invoice list with total paid and unpaid amounts
 export interface GetInvoicesOutput {
   invoices: ReturnType<Invoice["toJSON"]>[];
   totalUnpaid: number;
@@ -25,25 +23,21 @@ export class GetInvoicesUseCase implements UseCase<
   constructor(private readonly invoiceRepository: IInvoiceRepository) {}
 
   async execute(input: GetInvoicesInput): Promise<Result<GetInvoicesOutput>> {
-    // 1 — Only admins can view billing information
+    // 1 — Security check
     if (input.role !== Role.ADMIN) {
       return Result.fail("Only admins can view billing information");
     }
 
-    // 2 — Fetch unpaid only or full billing history based on filter
+    // 2 — Fetch data using numeric ID
     let invoices: Invoice[];
 
     if (input.unpaidOnly) {
-      invoices = await this.invoiceRepository.findUnpaidByOrganizationId(
-        input.organizationId,
-      );
+      invoices = await this.invoiceRepository.findUnpaidByOrganizationId(input.organizationId);
     } else {
-      invoices = await this.invoiceRepository.findByOrganizationId(
-        input.organizationId,
-      );
+      invoices = await this.invoiceRepository.findByOrganizationId(input.organizationId);
     }
 
-    // 3 — Calculate totals across the result set
+    // 3 — Calculate totals
     const totalUnpaid = invoices
       .filter((inv) => !inv.isPaid)
       .reduce((sum, inv) => sum + inv.amount, 0);

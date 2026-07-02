@@ -5,16 +5,14 @@ import { TicketStatus }   from '../domain/TicketStatus.enum';
 import { TicketPriority } from '../domain/TicketPriority.enum';
 import { ITicketRepository } from '../domain/ITicketRepository';
 
-// Input — title and optional priority/category; organizationId and clientId from JWT
 export interface CreateTicketInput {
   title:          string;
   priority?:      TicketPriority;
   category?:      string;
-  organizationId: string;
-  clientId:       string;
+  organizationId: number;
+  clientId:       number;
 }
 
-// Output — the newly created ticket
 export interface CreateTicketOutput {
   ticket: ReturnType<Ticket['toJSON']>;
 }
@@ -27,8 +25,7 @@ export class CreateTicketUseCase
   ) {}
 
   async execute(input: CreateTicketInput): Promise<Result<CreateTicketOutput>> {
-
-    // 1 — Create the Ticket entity; status starts as OPEN, priority defaults to MEDIUM
+    // 1 — Create the Ticket entity
     const ticket = Ticket.create({
       title:          input.title,
       status:         TicketStatus.OPEN,

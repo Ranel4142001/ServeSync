@@ -3,15 +3,13 @@ import { Result }    from '@shared/domain/Result';
 import { Invoice }   from '../domain/Invoice.entity';
 import { IInvoiceRepository } from '../domain/IInvoiceRepository';
 
-// Input — organization, amount, and currency to bill
 export interface CreateInvoiceInput {
   amount:         number;
   currency:       string;
   description?:   string;
-  organizationId: string;
+  organizationId: number;
 }
 
-// Output — the newly created invoice
 export interface CreateInvoiceOutput {
   invoice: ReturnType<Invoice['toJSON']>;
 }
@@ -24,9 +22,9 @@ export class CreateInvoiceUseCase
   ) {}
 
   async execute(input: CreateInvoiceInput): Promise<Result<CreateInvoiceOutput>> {
-
-    // 1 — Create the Invoice entity; throws if amount or currency is invalid
+    // 1 — Create the Invoice domain entity
     const invoice = Invoice.create({
+      number:         null,
       amount:         input.amount,
       currency:       input.currency.toUpperCase(),
       description:    input.description ?? null,
@@ -35,7 +33,7 @@ export class CreateInvoiceUseCase
       createdAt:      new Date(),
     });
 
-    // 2 — Persist and return the saved invoice
+    // 2 — Persist domain model via infrastructure repository
     const saved = await this.invoiceRepository.save(invoice);
 
     return Result.ok({ invoice: saved.toJSON() });

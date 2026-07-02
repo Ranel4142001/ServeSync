@@ -1,0 +1,62 @@
+import { FastifyInstance } from 'fastify';
+import prisma              from '@shared/infrastructure/PrismaClient';
+import { authenticate, requireRole } from '../../auth/presentation/rbac.middleware';
+import { Role }                      from '../../auth/domain/Role.enum';
+import { GeminiProvider }            from '../infrastructure/providers/GeminiProvider';
+import { PrismaTicketRepository }    from '../../tickets/infrastructure/persistence/PrismaTicketRepository';
+import { PrismaUserRepository }      from '../../auth/infrastructure/persistence/PrismaUserRepository';
+import { TriageTicketUseCase }       from '../application/TriageTicket.usecase';
+import { DraftResponseUseCase }      from '../application/DraftResponse.usecase';
+import { decodeId } from '@shared/utils/idGenerators';
+
+export async function aiRoutes(app: FastifyInstance): Promise<void> {
+
+  const aiProvider       = new GeminiProvider();
+  const ticketRepository = new PrismaTicketRepository(prisma);
+  const userRepository   = new PrismaUserRepository(prisma);
+
+  const triageTicketUseCase  = new TriageTicketUseCase(aiProvider, ticketRepository);
+  const draftResponseUseCase = new DraftResponseUseCase(aiProvider, ticketRepository, userRepository);
+
+  // POST /ai/triage/:ticketId — analyze a ticket and assign category + priority
+  app.post('/ai/triage/:ticketId', {
+    preHandler: [authenticate, requireRole(Role.AGENT, Role.ADMIN)]
+  }, async (request, reply) => {
+    const { ticketId } = request.params as { ticketId: string };
+
+    if (!ticketId) {
+      return reply.status(400).send({ error: 'Ticket ID is required' });
+    }
+
+    const result = await triageTicketUseCase.execute({ ticketId: decodeId(ticketId) });
+
+    if (!result.isSuccess) {
+      return reply.status(400).send({ error: result.error });
+    }
+
+    return reply.status(200).send(result.value);
+  });
+
+  // POST /ai/draft/:ticketId — generate a draft response for the agent to review
+  app.post('/ai/draft/:ticketId', {
+    preHandler: [authenticate, requireRole(Role.AGENT, Role.ADMIN)]
+  }, async (request, reply) => {
+    const { ticketId } = request.params as { ticketId: string };
+    const { userId }   = request.currentUser;
+
+    if (!ticketId) {
+      return reply.status(400).send({ error: 'Ticket ID is required' });
+    }
+
+    const result = await draftResponseUseCase.execute({
+      ticketId: decodeId(ticketId),
+      agentId: userId,
+    });
+
+    if (!result.isSuccess) {
+      return reply.status(400).send({ error: result.error });
+    }
+
+    return reply.status(200).send(result.value);
+  });
+}
