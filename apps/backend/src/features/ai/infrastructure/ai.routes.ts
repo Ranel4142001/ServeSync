@@ -7,6 +7,7 @@ import { PrismaTicketRepository }    from '../../tickets/infrastructure/PrismaTi
 import { PrismaUserRepository }      from '../../auth/infrastructure/PrismaUserRepository';
 import { TriageTicketUseCase }       from '../application/TriageTicket.usecase';
 import { DraftResponseUseCase }      from '../application/DraftResponse.usecase';
+import { decodeId } from '@shared/utils/idGenerators';
 
 export async function aiRoutes(app: FastifyInstance): Promise<void> {
 
@@ -27,7 +28,7 @@ export async function aiRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(400).send({ error: 'Ticket ID is required' });
     }
 
-    const result = await triageTicketUseCase.execute({ ticketId });
+    const result = await triageTicketUseCase.execute({ ticketId: decodeId(ticketId) });
 
     if (!result.isSuccess) {
       return reply.status(400).send({ error: result.error });
@@ -48,7 +49,7 @@ export async function aiRoutes(app: FastifyInstance): Promise<void> {
     }
 
     const result = await draftResponseUseCase.execute({
-      ticketId,
+      ticketId: decodeId(ticketId),
       agentId: userId,
     });
 

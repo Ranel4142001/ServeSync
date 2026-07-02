@@ -3,12 +3,10 @@ import { Result } from "@shared/domain/Result";
 import { Ticket } from "../domain/Ticket.entity";
 import { Role } from "../../auth/domain/Role.enum";
 import { ITicketRepository } from "../domain/ITicketRepository";
-import { decodeId } from "@shared/utils/idGenerators";
 
-// Input uses strings extracted straight out of the client request/JWT
 export interface GetTicketsInput {
-  organizationId: string; // e.g., "ORG-0001"
-  userId: string;         // e.g., "USER-0088"
+  organizationId: number;
+  userId: number;
   role: Role;
 }
 
@@ -25,15 +23,11 @@ export class GetTicketsUseCase implements UseCase<
   async execute(input: GetTicketsInput): Promise<Result<GetTicketsOutput>> {
     let tickets: Ticket[];
 
-    // Parse values to internal operational types
-    const numericUserId = decodeId(input.userId);
-    const numericOrgId = decodeId(input.organizationId);
-
     // Clients see only their own tickets; agents and admins see all in the organization
     if (input.role === Role.CLIENT) {
-      tickets = await this.ticketRepository.findByClientId(numericUserId);
+      tickets = await this.ticketRepository.findByClientId(input.userId);
     } else {
-      tickets = await this.ticketRepository.findByOrganizationId(numericOrgId);
+      tickets = await this.ticketRepository.findByOrganizationId(input.organizationId);
     }
 
     return Result.ok({

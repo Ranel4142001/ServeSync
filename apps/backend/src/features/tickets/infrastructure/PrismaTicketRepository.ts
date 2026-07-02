@@ -1,5 +1,6 @@
-import { PrismaClient, TicketStatus as PrismaTicketStatus,
+import { TicketStatus as PrismaTicketStatus,
   TicketPriority as PrismaTicketPriority }    from '@prisma/client';
+import { ExtendedPrismaClient } from '@shared/infrastructure/PrismaClient';
 import { ITicketRepository } from '../domain/ITicketRepository';
 import { Ticket }          from '../domain/Ticket.entity';
 import { Message }         from '../domain/Message.entity';
@@ -8,7 +9,7 @@ import { TicketPriority }  from '../domain/TicketPriority.enum';
 
 export class PrismaTicketRepository implements ITicketRepository {
 
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: ExtendedPrismaClient) {}
 
   // Maps a raw Prisma row to a Ticket entity — only place that knows Prisma's ticket shape
   private toTicketEntity(raw: any): Ticket {

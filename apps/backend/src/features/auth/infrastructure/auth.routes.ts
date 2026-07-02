@@ -8,7 +8,7 @@ import { BcryptHashService }    from './BcryptHashService';
 import { JwtService }           from './JwtService';
 import { authenticate, requireRole } from './rbac.middleware';
 import { Role } from '../domain/Role.enum';
-import { decodeId } from '@shared/utils/idGenerators';
+import { decodeId, encodeId } from '@shared/utils/idGenerators';
 
 export async function authRoutes(app: FastifyInstance): Promise<void> {
 
@@ -28,14 +28,17 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       firstName:      string;
       lastName:       string;
       role:           Role;
-      organizationId: string;
+      organizationId: string; // public ID like "ORG-0001" from frontend
     };
 
     if (!body.email || !body.password || !body.firstName || !body.lastName) {
       return reply.status(400).send({ error: 'All fields are required' });
     }
 
-    const result = await registerUseCase.execute(body);
+    const result = await registerUseCase.execute({
+      ...body,
+      organizationId: decodeId(body.organizationId),
+    });
 
     if (!result.isSuccess) {
       return reply.status(400).send({ error: result.error });

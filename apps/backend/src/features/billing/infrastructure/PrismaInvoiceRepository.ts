@@ -1,9 +1,9 @@
-import { PrismaClient } from "@prisma/client";
+import { ExtendedPrismaClient } from "@shared/infrastructure/PrismaClient";
 import { IInvoiceRepository } from "../domain/IInvoiceRepository";
 import { Invoice } from "../domain/Invoice.entity";
 
 export class PrismaInvoiceRepository implements IInvoiceRepository {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: ExtendedPrismaClient) {}
 
   // Maps a raw Prisma row to an Invoice entity
   private toEntity(raw: any): Invoice {

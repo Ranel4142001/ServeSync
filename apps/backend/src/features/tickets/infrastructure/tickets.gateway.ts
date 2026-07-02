@@ -7,13 +7,13 @@ export function registerTicketGateway(io: Server): void {
     console.log(`Client connected: ${socket.id}`);
 
     // Join an organization room — user only receives events for their own org
-    socket.on('join:organization', (organizationId: string) => {
-      socket.join(organizationId);
+    socket.on('join:organization', (organizationId: number | string) => {
+      socket.join(String(organizationId));
       console.log(`Socket ${socket.id} joined org: ${organizationId}`);
     });
 
     // Join a ticket room — used for real-time message updates on a ticket detail page
-    socket.on('join:ticket', (ticketId: string) => {
+    socket.on('join:ticket', (ticketId: number | string) => {
       socket.join(`ticket:${ticketId}`);
       console.log(`Socket ${socket.id} joined ticket: ${ticketId}`);
     });
@@ -25,16 +25,16 @@ export function registerTicketGateway(io: Server): void {
 }
 
 // Broadcast a new ticket to all agents in the organization
-export function emitTicketCreated(io: Server, organizationId: string, ticket: any): void {
-  io.to(organizationId).emit('ticket:created', ticket);
+export function emitTicketCreated(io: Server, organizationId: number, ticket: any): void {
+  io.to(String(organizationId)).emit('ticket:created', ticket);
 }
 
 // Broadcast a new message to everyone viewing that ticket
-export function emitNewMessage(io: Server, ticketId: string, message: any): void {
+export function emitNewMessage(io: Server, ticketId: number, message: any): void {
   io.to(`ticket:${ticketId}`).emit('message:new', message);
 }
 
 // Broadcast a ticket update (e.g. status change) to the organization
-export function emitTicketUpdated(io: Server, organizationId: string, ticket: any): void {
-  io.to(organizationId).emit('ticket:updated', ticket);
+export function emitTicketUpdated(io: Server, organizationId: number, ticket: any): void {
+  io.to(String(organizationId)).emit('ticket:updated', ticket);
 }

@@ -77,7 +77,7 @@ export function AdminInvoicesPage() {
                 <tr key={inv.id} className="border-b border-gray-100 last:border-none hover:bg-gray-50 transition-colors">
                   <td className="px-3.5 py-2.5">
                     <p className="text-[11px] font-medium text-gray-900">{inv.description}</p>
-                    <p className="text-[10px] text-gray-400">{inv.id.slice(0, 12)}…</p>
+                    <p className="text-[10px] text-gray-400">{inv.number}</p>
                   </td>
                   <td className="px-3.5 py-2.5 text-[11px] font-semibold text-gray-900">{inv.amount}</td>
                   <td className="px-3.5 py-2.5">

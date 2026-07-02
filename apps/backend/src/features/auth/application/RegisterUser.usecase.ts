@@ -4,7 +4,6 @@ import { User } from "../domain/User.entity";
 import { Role } from "../domain/Role.enum";
 import { IUserRepository } from "../domain/IUserRepository";
 import { IHashService } from "../domain/IHashService";
-import { decodeId } from "@shared/utils/idGenerators"; // Added utility
 
 export interface RegisterUserInput {
   email: string;
@@ -12,7 +11,7 @@ export interface RegisterUserInput {
   firstName: string;
   lastName: string;
   role: Role;
-  organizationId: string; // Provided as string from API
+  organizationId: number;
 }
 
 export interface RegisterUserOutput {
@@ -36,8 +35,6 @@ export class RegisterUserUseCase implements UseCase<
 
     const passwordHash = await this.hashService.hash(input.password);
 
-    // Decode external string ID to internal numeric ID
-    const numericOrgId = decodeId(input.organizationId);
 
     const user = User.create({
       email: input.email,
@@ -46,7 +43,7 @@ export class RegisterUserUseCase implements UseCase<
       lastName: input.lastName,
       role: input.role,
       isActive: true,
-      organizationId: numericOrgId, // Now numeric
+      organizationId: input.organizationId,
       createdAt: new Date(),
       updatedAt: new Date(),
     });

@@ -4,6 +4,7 @@ import api from '@shared/lib/api';
 
 export interface Invoice {
   id:          string;
+  number:      string;
   amount:      string;   // pre-formatted e.g. "$150.00"
   description: string;
   isPaid:      boolean;

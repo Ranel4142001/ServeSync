@@ -3,15 +3,15 @@ import { Result } from "@shared/domain/Result";
 import { Document } from "../domain/Document.entity";
 //import { IStorageProvider } from "../domain/IStorageProvider";
 import { IDocumentRepository } from "../domain/IDocumentRepository";
-import { decodeId } from "@shared/utils/idGenerators";
+import { encodeId } from "@shared/utils/idGenerators";
 
 export interface UploadFileInput {
   fileName: string;
   buffer: Buffer;
   mimeType: string;
   sizeBytes: number;
-  ticketId: string; // e.g., "TICKET-0451"
-  organizationId: string; // e.g., "ORG-0001"
+  ticketId: number;
+  organizationId: number;
 }
 
 export interface UploadFileOutput {
@@ -41,14 +41,13 @@ export class UploadFileUseCase implements UseCase<
       );
     }
 
-    // 2 — Decode the ticket ID for the entity relationship
-    const numericTicketId = decodeId(input.ticketId);
-
-    // 3 — Build S3 key using string IDs for human-readable path structure
+    // 2 — Build S3 key using encoded IDs for human-readable path structure
     const timestamp = Date.now();
-    const s3Key = `uploads/${input.organizationId}/${input.ticketId}/${timestamp}-${input.fileName}`;
+    const orgLabel = encodeId('org', input.organizationId);
+    const ticketLabel = encodeId('ticket', input.ticketId);
+    const s3Key = `uploads/${orgLabel}/${ticketLabel}/${timestamp}-${input.fileName}`;
 
-    // // 4 — Upload to storage
+    // // 3 — Upload to storage
     // await this.storageProvider.upload({
     //   key: s3Key,
     //   buffer: input.buffer,
@@ -56,17 +55,17 @@ export class UploadFileUseCase implements UseCase<
     //   sizeBytes: input.sizeBytes,
     // });
 
-    // 5 — Create the Document entity with the numeric ticketId
+    // 4 — Create the Document entity with the numeric ticketId
     const document = Document.create({
       fileName: input.fileName,
       s3Key,
       mimeType: input.mimeType,
       sizeBytes: input.sizeBytes,
-      ticketId: numericTicketId,
+      ticketId: input.ticketId,
       createdAt: new Date(),
     });
 
-    // 6 — Persist
+    // 5 — Persist
     const saved = await this.documentRepository.save(document);
 
     return Result.ok({ document: saved.toJSON() });

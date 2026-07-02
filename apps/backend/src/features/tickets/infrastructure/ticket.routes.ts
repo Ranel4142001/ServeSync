@@ -10,6 +10,7 @@ import { GetTicketsUseCase }      from '../application/GetTickets.usecase';
 import { GetTicketByIdUseCase }   from '../application/GetTicketById.usecase';
 import { ReplyToTicketUseCase }   from '../application/ReplyToTicket.usecase';
 import { CloseTicketUseCase }     from '../application/CloseTicket.usecase';
+import { decodeId } from '@shared/utils/idGenerators';
 import {
   emitTicketCreated,
   emitNewMessage,
@@ -88,7 +89,7 @@ export function ticketRoutes(io: Server) {
       const userIds = [...new Set(
         result.value.tickets
           .flatMap(t => [t.agentId, t.clientId])
-          .filter((id): id is string => id !== null)
+          .filter((id): id is number => id !== null)
       )];
 
       // Single query to get all user names
@@ -130,7 +131,7 @@ export function ticketRoutes(io: Server) {
       const { userId, organizationId, role } = request.currentUser;
 
       const result = await getTicketByIdUseCase.execute({
-        ticketId: id,
+        ticketId: decodeId(id),
         userId,
         organizationId,
         role,
@@ -175,8 +176,10 @@ export function ticketRoutes(io: Server) {
         return reply.status(400).send({ error: 'Reply body is required' });
       }
 
+      const numericTicketId = decodeId(id);
+
       const result = await replyToTicketUseCase.execute({
-        ticketId:  id,
+        ticketId:  numericTicketId,
         body:      body.body,
         authorId:  userId,
         role,
@@ -187,7 +190,7 @@ export function ticketRoutes(io: Server) {
         return reply.status(400).send({ error: result.error });
       }
 
-      emitNewMessage(io, id, result.value.message);
+      emitNewMessage(io, numericTicketId, result.value.message);
 
       return reply.status(201).send({
         message:   'Reply sent successfully',
@@ -207,7 +210,7 @@ export function ticketRoutes(io: Server) {
       const { userId, organizationId, role } = request.currentUser;
 
       const result = await closeTicketUseCase.execute({
-        ticketId: id,
+        ticketId: decodeId(id),
         userId,
         role,
       });

@@ -2,10 +2,9 @@ import { UseCase }  from '@shared/application/UseCase';
 import { Result }   from '@shared/domain/Result';
 import { IAIProvider }       from '../domain/IAIProvider';
 import { ITicketRepository } from '../../tickets/domain/ITicketRepository';
-import { decodeId } from '@shared/utils/idGenerators';
 
 export interface TriageTicketInput {
-  ticketId: string;
+  ticketId: number;
 }
 
 export interface TriageTicketOutput {
@@ -23,26 +22,23 @@ export class TriageTicketUseCase
   ) {}
 
   async execute(input: TriageTicketInput): Promise<Result<TriageTicketOutput>> {
-    // 1 — Decode the ID
-    const numericTicketId = decodeId(input.ticketId);
-
-    // 2 — Load the ticket
-    const ticket = await this.ticketRepository.findById(numericTicketId);
+    // 1 — Load the ticket
+    const ticket = await this.ticketRepository.findById(input.ticketId);
     if (!ticket) {
       return Result.fail('Ticket not found');
     }
 
-    // 3 — Load messages
-    const messages = await this.ticketRepository.findMessagesByTicketId(numericTicketId);
+    // 2 — Load messages
+    const messages = await this.ticketRepository.findMessagesByTicketId(input.ticketId);
     const firstMessage = messages.length > 0 ? messages[0].body : '';
 
-    // 4 — AI Analysis
+    // 3 — AI Analysis
     const triageResult = await this.aiProvider.triageTicket({
       title: ticket.title,
       body:  firstMessage,
     });
 
-    // 5 — Persist
+    // 4 — Persist
     ticket.setAiTriage(JSON.stringify({
       category: triageResult.category,
       priority: triageResult.priority,

@@ -5,12 +5,13 @@ import { S3StorageProvider }        from './S3StorageProvider';
 import { PrismaDocumentRepository } from './PrismaDocumentRepository';
 import { UploadFileUseCase }        from '../application/UploadFile.usecase';
 import { GetFileUrlUseCase }        from '../application/GetFileUrl.usecase';
+import { decodeId } from '@shared/utils/idGenerators';
 
 export async function storageRoutes(app: FastifyInstance): Promise<void> {
 
   const storageProvider    = new S3StorageProvider();
   const documentRepository = new PrismaDocumentRepository(prisma);
-  const uploadFileUseCase  = new UploadFileUseCase(storageProvider, documentRepository);
+  const uploadFileUseCase  = new UploadFileUseCase(documentRepository);
   const getFileUrlUseCase  = new GetFileUrlUseCase(storageProvider, documentRepository);
 
   // POST /tickets/:ticketId/documents — upload a file and attach it to a ticket
@@ -39,7 +40,7 @@ export async function storageRoutes(app: FastifyInstance): Promise<void> {
       buffer,
       mimeType:  data.mimetype,
       sizeBytes,
-      ticketId,
+      ticketId:       decodeId(ticketId),
       organizationId,
     });
 
@@ -60,7 +61,7 @@ export async function storageRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(400).send({ error: 'Document ID is required' });
     }
 
-    const result = await getFileUrlUseCase.execute({ documentId: id });
+    const result = await getFileUrlUseCase.execute({ documentId: decodeId(id) });
 
     if (!result.isSuccess) {
       return reply.status(404).send({ error: result.error });
@@ -79,7 +80,7 @@ export async function storageRoutes(app: FastifyInstance): Promise<void> {
       return reply.status(400).send({ error: 'Ticket ID is required' });
     }
 
-    const documents = await documentRepository.findByTicketId(ticketId);
+    const documents = await documentRepository.findByTicketId(decodeId(ticketId));
 
     return reply.status(200).send({
       documents: documents.map(d => d.toJSON()),

@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import prisma from '@shared/infrastructure/PrismaClient';
 import { PrismaOrganizationRepository } from './PrismaOrganizationRepository';
 import { CreateOrganizationUseCase }     from '../application/CreateOrganization.usecase';
+import { decodeId } from '@shared/utils/idGenerators';
 
 export async function organizationRoutes(app: FastifyInstance): Promise<void> {
 
@@ -37,7 +38,7 @@ export async function organizationRoutes(app: FastifyInstance): Promise<void> {
   app.get('/organizations/:id', async (request, reply) => {
     const { id } = request.params as { id: string };
 
-    const org = await organizationRepository.findById(id);
+    const org = await organizationRepository.findById(decodeId(id));
 
     if (!org) {
       return reply.status(404).send({ error: 'Organization not found' });

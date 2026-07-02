@@ -93,7 +93,7 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
     const { id }   = request.params as { id: string };
     const { role } = request.currentUser;
 
-    const result = await markPaidUseCase.execute({ invoiceId: id, role });
+    const result = await markPaidUseCase.execute({ invoiceId: decodeId(id), role });
 
     if (!result.isSuccess) {
       return reply.status(400).send({ error: result.error });

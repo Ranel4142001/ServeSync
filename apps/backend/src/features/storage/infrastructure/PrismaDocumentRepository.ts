@@ -1,9 +1,9 @@
-import { PrismaClient } from "@prisma/client";
+import { ExtendedPrismaClient } from "@shared/infrastructure/PrismaClient";
 import { IDocumentRepository } from "../domain/IDocumentRepository";
 import { Document } from "../domain/Document.entity";
 
 export class PrismaDocumentRepository implements IDocumentRepository {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: ExtendedPrismaClient) {}
 
   // Maps a raw Prisma row to a Document entity
   private toEntity(raw: any): Document {

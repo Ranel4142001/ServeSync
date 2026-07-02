@@ -1,12 +1,35 @@
+import { useEffect, useState } from 'react';
 import { DashboardLayout } from '@/shared/components/layout/DashboardLayout';
 import { PageHeader, Card } from '@/shared/components/ui/DashboardComponents';
 import { useAuthStore } from '@/features/auth/stores/auth.store';
+import { getOrganization, Organization } from '@/features/organizations/api/organizations.api';
 
 // Organizations page — shows the current user's organization info
 // The backend only has GET /organizations/:id (no list endpoint)
-// So we show the user's own organization details
+// So we fetch and show the user's own organization details
 export function AdminOrganizationsPage() {
   const { user } = useAuthStore();
+
+  const [organization, setOrganization] = useState<Organization | null>(null);
+  const [isLoading, setLoading]         = useState(true);
+  const [error, setError]               = useState<string | null>(null); 
+
+   useEffect(() => {
+    if (!user?.organizationId) {
+      setLoading(false);
+      return;
+    }
+    (async () => {
+      try {
+        const org = await getOrganization(user.organizationId);
+        setOrganization(org);
+      } catch (err: any) {
+        setError(err.response?.data?.error ?? 'Failed to load organization');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [user?.organizationId]);
 
   return (
     <DashboardLayout title="Organizations">
@@ -17,6 +40,10 @@ export function AdminOrganizationsPage() {
           description="View and manage your organization"
         />
 
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-2.5 text-xs text-red-700">{error}</div>
+        )}
+
         <Card title="Your organization">
           <div className="px-3.5 py-4 flex flex-col gap-3">
             <div className="flex items-center gap-3">
@@ -24,9 +51,12 @@ export function AdminOrganizationsPage() {
                 <i className="ti ti-building text-lg" aria-hidden="true" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-900">ServeSync Organization</p>
-                <p className="text-[11px] text-gray-500">ID: {user?.organizationId?.slice(0, 12) ?? '—'}…</p>
-              </div>
+          <p className="text-sm font-semibold text-gray-900">
+                 {isLoading ? 'Loading…' : organization?.name ?? 'ServeSync Organization'}
+               </p>
+                <p className="text-[11px] text-gray-500">
+                  {isLoading ? '—' : `Code: ${organization?.code ?? '—'}`}
+                </p>              </div>
             </div>
 
             <div className="grid grid-cols-3 gap-3 mt-2">
