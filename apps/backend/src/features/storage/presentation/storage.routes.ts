@@ -1,8 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import prisma              from '@shared/infrastructure/PrismaClient';
-import { authenticate }    from '../../auth/infrastructure/rbac.middleware';
-import { S3StorageProvider }        from './S3StorageProvider';
-import { PrismaDocumentRepository } from './PrismaDocumentRepository';
+import { authenticate }    from '../../auth/presentation/rbac.middleware';
+import { S3StorageProvider }        from '../infrastructure/providers/S3StorageProvider';
+import { PrismaDocumentRepository } from '../infrastructure/persistence/PrismaDocumentRepository';
 import { UploadFileUseCase }        from '../application/UploadFile.usecase';
 import { GetFileUrlUseCase }        from '../application/GetFileUrl.usecase';
 import { decodeId } from '@shared/utils/idGenerators';

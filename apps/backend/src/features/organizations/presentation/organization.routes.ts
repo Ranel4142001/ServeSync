@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import prisma from '@shared/infrastructure/PrismaClient';
-import { PrismaOrganizationRepository } from './PrismaOrganizationRepository';
+import { PrismaOrganizationRepository } from '../infrastructure/persistence/PrismaOrganizationRepository';
 import { CreateOrganizationUseCase }     from '../application/CreateOrganization.usecase';
 import { decodeId } from '@shared/utils/idGenerators';
 

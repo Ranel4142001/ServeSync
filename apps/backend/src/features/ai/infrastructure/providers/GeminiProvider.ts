@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { IAIProvider, TriageResult, DraftResult } from "../domain/IAIProvider";
+import { IAIProvider, TriageResult, DraftResult } from "../../domain/IAIProvider";
 
 export class GeminiProvider implements IAIProvider {
   // gemini-1.5-flash — fast and free-tier friendly

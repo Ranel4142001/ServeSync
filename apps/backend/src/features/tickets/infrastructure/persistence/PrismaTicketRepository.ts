@@ -1,11 +1,11 @@
 import { TicketStatus as PrismaTicketStatus,
   TicketPriority as PrismaTicketPriority }    from '@prisma/client';
 import { ExtendedPrismaClient } from '@shared/infrastructure/PrismaClient';
-import { ITicketRepository } from '../domain/ITicketRepository';
-import { Ticket }          from '../domain/Ticket.entity';
-import { Message }         from '../domain/Message.entity';
-import { TicketStatus }    from '../domain/TicketStatus.enum';
-import { TicketPriority }  from '../domain/TicketPriority.enum';
+import { ITicketRepository } from '../../domain/ITicketRepository';
+import { Ticket }          from '../../domain/Ticket.entity';
+import { Message }         from '../../domain/Message.entity';
+import { TicketStatus }    from '../../domain/TicketStatus.enum';
+import { TicketPriority }  from '../../domain/TicketPriority.enum';
 
 export class PrismaTicketRepository implements ITicketRepository {
 

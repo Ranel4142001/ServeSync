@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import { JwtService } from "./JwtService";
+import { JwtService } from "../infrastructure/security/JwtService";
 import { Role } from "../domain/Role.enum";
 import { TokenPayload } from "../domain/ITokenService";
 

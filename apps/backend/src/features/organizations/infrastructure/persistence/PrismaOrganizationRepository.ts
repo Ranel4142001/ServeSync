@@ -1,6 +1,6 @@
 import { ExtendedPrismaClient } from "@shared/infrastructure/PrismaClient";
-import { IOrganizationRepository } from "../domain/IOrganizationRepository";
-import { Organization } from "../domain/Organization.entity";
+import { IOrganizationRepository } from "../../domain/IOrganizationRepository";
+import { Organization } from "../../domain/Organization.entity";
 
 export class PrismaOrganizationRepository implements IOrganizationRepository {
   constructor(private readonly prisma: ExtendedPrismaClient) {}

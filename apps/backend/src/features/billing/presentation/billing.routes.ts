@@ -1,8 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import prisma              from '@shared/infrastructure/PrismaClient';
-import { authenticate, requireRole } from '../../auth/infrastructure/rbac.middleware';
+import { authenticate, requireRole } from '../../auth/presentation/rbac.middleware';
 import { Role }                      from '../../auth/domain/Role.enum';
-import { PrismaInvoiceRepository }   from './PrismaInvoiceRepository';
+import { PrismaInvoiceRepository }   from '../infrastructure/persistence/PrismaInvoiceRepository';
 import { CreateInvoiceUseCase }      from '../application/CreateInvoice.usecase';
 import { GetInvoicesUseCase }        from '../application/GetInvoices.usecase';
 import { MarkInvoicePaidUseCase }    from '../application/MarkInvoicePaid.usecase';

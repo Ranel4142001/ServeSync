@@ -1,6 +1,6 @@
 import { ExtendedPrismaClient } from "@shared/infrastructure/PrismaClient";
-import { IInvoiceRepository } from "../domain/IInvoiceRepository";
-import { Invoice } from "../domain/Invoice.entity";
+import { IInvoiceRepository } from "../../domain/IInvoiceRepository";
+import { Invoice } from "../../domain/Invoice.entity";
 
 export class PrismaInvoiceRepository implements IInvoiceRepository {
   constructor(private readonly prisma: ExtendedPrismaClient) {}

@@ -5,13 +5,13 @@ import jwt       from '@fastify/jwt';
 import multipart from '@fastify/multipart';
 import { Server } from 'socket.io';
 import { createServer }       from 'http'; 
-import { authRoutes } from '../features/auth/infrastructure/auth.routes';
-import { organizationRoutes } from '../features/organizations/infrastructure/organization.routes';
-import { ticketRoutes } from '../features/tickets/infrastructure/ticket.routes';
-import { storageRoutes } from '@features/storage/infrastructure/storage.routes';
-import { aiRoutes } from '@features/ai/infrastructure/ai.routes';
-import { billingRoutes } from '@features/billing/infrastructure/billing.routes';
-import { registerTicketGateway } from '../features/tickets/infrastructure/tickets.gateway';
+import { authRoutes } from '../features/auth/presentation/auth.routes';
+import { organizationRoutes } from '../features/organizations/presentation/organization.routes';
+import { ticketRoutes } from '../features/tickets/presentation/ticket.routes';
+import { storageRoutes } from '@features/storage/presentation/storage.routes';
+import { aiRoutes } from '@features/ai/presentation/ai.routes';
+import { billingRoutes } from '@features/billing/presentation/billing.routes';
+import { registerTicketGateway } from '../features/tickets/presentation/tickets.gateway';
 
 export function buildApp() {
   const app = Fastify({ logger: true });

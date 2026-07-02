@@ -5,7 +5,7 @@ import {
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { IStorageProvider } from "../domain/IStorageProvider";
+import { IStorageProvider } from "../../domain/IStorageProvider";
 
 export class S3StorageProvider implements IStorageProvider {
   private readonly client: S3Client;

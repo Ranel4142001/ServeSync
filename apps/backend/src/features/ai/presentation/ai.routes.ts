@@ -1,10 +1,10 @@
 import { FastifyInstance } from 'fastify';
 import prisma              from '@shared/infrastructure/PrismaClient';
-import { authenticate, requireRole } from '../../auth/infrastructure/rbac.middleware';
+import { authenticate, requireRole } from '../../auth/presentation/rbac.middleware';
 import { Role }                      from '../../auth/domain/Role.enum';
-import { GeminiProvider }            from './GeminiProvider';
-import { PrismaTicketRepository }    from '../../tickets/infrastructure/PrismaTicketRepository';
-import { PrismaUserRepository }      from '../../auth/infrastructure/PrismaUserRepository';
+import { GeminiProvider }            from '../infrastructure/providers/GeminiProvider';
+import { PrismaTicketRepository }    from '../../tickets/infrastructure/persistence/PrismaTicketRepository';
+import { PrismaUserRepository }      from '../../auth/infrastructure/persistence/PrismaUserRepository';
 import { TriageTicketUseCase }       from '../application/TriageTicket.usecase';
 import { DraftResponseUseCase }      from '../application/DraftResponse.usecase';
 import { decodeId } from '@shared/utils/idGenerators';

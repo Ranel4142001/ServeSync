@@ -1,7 +1,7 @@
 import prismaClient from "@shared/infrastructure/PrismaClient";
-import { IUserRepository } from "../domain/IUserRepository";
-import { User } from "../domain/User.entity";
-import { Role } from "../domain/Role.enum";
+import { IUserRepository } from "../../domain/IUserRepository";
+import { User } from "../../domain/User.entity";
+import { Role } from "../../domain/Role.enum";
 
 export class PrismaUserRepository implements IUserRepository {
   constructor(private readonly prisma: typeof prismaClient) {}

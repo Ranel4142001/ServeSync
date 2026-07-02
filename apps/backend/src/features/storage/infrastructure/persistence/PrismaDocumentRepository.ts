@@ -1,6 +1,6 @@
 import { ExtendedPrismaClient } from "@shared/infrastructure/PrismaClient";
-import { IDocumentRepository } from "../domain/IDocumentRepository";
-import { Document } from "../domain/Document.entity";
+import { IDocumentRepository } from "../../domain/IDocumentRepository";
+import { Document } from "../../domain/Document.entity";
 
 export class PrismaDocumentRepository implements IDocumentRepository {
   constructor(private readonly prisma: ExtendedPrismaClient) {}

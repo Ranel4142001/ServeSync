@@ -1,10 +1,10 @@
 import { FastifyInstance } from 'fastify';
 import { Server }          from 'socket.io';
 import prisma              from '@shared/infrastructure/PrismaClient';
-import { authenticate, requireRole } from '../../auth/infrastructure/rbac.middleware';
+import { authenticate, requireRole } from '../../auth/presentation/rbac.middleware';
 import { Role }            from '../../auth/domain/Role.enum';
 import { TicketPriority }  from '../domain/TicketPriority.enum';
-import { PrismaTicketRepository } from './PrismaTicketRepository';
+import { PrismaTicketRepository } from '../infrastructure/persistence/PrismaTicketRepository';
 import { CreateTicketUseCase }    from '../application/CreateTicket.usecase';
 import { GetTicketsUseCase }      from '../application/GetTickets.usecase';
 import { GetTicketByIdUseCase }   from '../application/GetTicketById.usecase';
