@@ -1,7 +1,7 @@
 import { StrictMode, useEffect } from 'react';
 import { createRoot }   from 'react-dom/client';
 import { AppRouter }    from './router/index';
-import { useAuthStore } from './features/auth/stores/auth.store';
+import { useAuthStore } from './features/auth';
 import './index.css';
 
 function App() {
