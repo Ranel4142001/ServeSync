@@ -1,48 +1,46 @@
-// Pure ID-formatting and parsing helpers — no database access here
-// Reusable by any repository, controller, or use case
+import { randomBytes } from 'crypto';
 
 /**
- * Transforms an internal database integer ID into your custom UI string formats.
+ * Generates a time-sorted, lexicographically sortable UUID v7.
+ * This retains the security of UUID v4 while offering sequential insertion performance.
  */
-export function encodeId(type: 'org' | 'ticket' | 'inv' | 'user', internalId: number): string {
-  if (!internalId || isNaN(internalId)) {
-    throw new Error(`Invalid internal ID provided for type ${type}`);
-  }
-
-  switch (type) {
-    case 'org':
-      return `ORG-${String(internalId).padStart(4, '0')}`;
-    case 'ticket':
-      return `TICKET-${String(internalId).padStart(4, '0')}`;
-    case 'user':
-      return `USER-${String(internalId).padStart(4, '0')}`; // Handles clients/agents
-    case 'inv': {
-      const currentYear = 2026; 
-      return `INV-${currentYear}-${String(internalId).padStart(5, '0')}`;
-    }
-    default:
-      throw new Error(`Invalid model type provided to encodeId: ${type}`);
-  }
+export function uuidv7(): string {
+  const now = Date.now();
+  const hexTimestamp = now.toString(16).padStart(12, '0'); // 48 bits (12 hex digits)
+  
+  const rand = randomBytes(10);
+  
+  // Set version 7 (0111) in byte 6
+  rand[0] = (rand[0] & 0x0f) | 0x70;
+  
+  // Set variant 1 (10xx) in byte 8
+  rand[2] = (rand[2] & 0x3f) | 0x80;
+  
+  const part3 = rand.slice(0, 2).toString('hex');
+  const part4 = rand.slice(2, 4).toString('hex');
+  const part5 = rand.slice(4, 10).toString('hex');
+  
+  return `${hexTimestamp.slice(0, 8)}-${hexTimestamp.slice(8, 12)}-${part3}-${part4}-${part5}`;
 }
 
 /**
- * Reverses your custom UI string formats back into an internal database integer.
- * Handles patterns like "ORG-0012", "TICKET-0154", and "INV-2026-00045"
+ * Transforms an internal database UUID string ID into the public string format.
+ * With UUIDs, the internal ID is already secure, so we return it directly.
  */
-export function decodeId(publicId: string): number {
+export function encodeId(type: 'org' | 'ticket' | 'inv' | 'user', internalId: string): string {
+  if (!internalId) {
+    throw new Error(`Invalid internal ID provided for type ${type}`);
+  }
+  return internalId;
+}
+
+/**
+ * Reverses public string format back into database UUID.
+ * With UUIDs, this is a pass-through.
+ */
+export function decodeId(publicId: string): string {
   if (!publicId || typeof publicId !== 'string') {
     throw new Error('Public ID must be a valid string');
   }
-
-  const parts = publicId.split('-');
-  
-  // No matter the prefix or structure, the actual integer is always the last segment
-  const rawId = parts[parts.length - 1]; 
-  const internalId = parseInt(rawId, 10);
-  
-  if (isNaN(internalId)) {
-    throw new Error(`Invalid public ID structure: ${publicId}`);
-  }
-  
-  return internalId;
+  return publicId;
 }

@@ -3,17 +3,17 @@ import { Message } from "./Message.entity";
 import { TicketStatus } from "./TicketStatus.enum";
 
 export interface ITicketRepository {
-  findById(id: number): Promise<Ticket | null>;
-  findByOrganizationId(organizationId: number): Promise<Ticket[]>;
+  findById(id: string): Promise<Ticket | null>;
+  findByOrganizationId(organizationId: string): Promise<Ticket[]>;
   
-  // Lookup tickets using the client's numeric ID
-  findByClientId(clientId: number): Promise<Ticket[]>;
+  // Lookup tickets using the client's string ID
+  findByClientId(clientId: string): Promise<Ticket[]>;
   
-  findByStatus(organizationId: number, status: TicketStatus): Promise<Ticket[]>;
+  findByStatus(organizationId: string, status: TicketStatus): Promise<Ticket[]>;
 
   save(ticket: Ticket): Promise<Ticket>;
 
-  findMessagesByTicketId(ticketId: number): Promise<Message[]>;
+  findMessagesByTicketId(ticketId: string): Promise<Message[]>;
   
   saveMessage(message: Message): Promise<Message>;
 }

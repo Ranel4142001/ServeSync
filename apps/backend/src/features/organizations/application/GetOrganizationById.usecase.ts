@@ -20,11 +20,11 @@ export class GetOrganizationByIdUseCase
   ) {}
 
   async execute(input: GetOrganizationByIdInput): Promise<Result<GetOrganizationByIdOutput>> {
-    // 1 — Decode the incoming string handle into an operational number
-    const numericOrgId = decodeId(input.orgId);
+    // 1 — Decode the incoming string handle into an operational UUID
+    const decodedOrgId = decodeId(input.orgId);
 
     // 2 — Query the database using the high-performance index
-    const organization = await this.organizationRepository.findById(numericOrgId);
+    const organization = await this.organizationRepository.findById(decodedOrgId);
     if (!organization) {
       return Result.fail('Organization not found');
     }

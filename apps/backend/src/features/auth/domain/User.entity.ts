@@ -1,4 +1,5 @@
 import { Entity } from "@shared/domain/Entity";
+import { uuidv7 } from "@shared/utils/idGenerators";
 import { Role } from "./Role.enum";
 
 interface UserProps {
@@ -8,21 +9,20 @@ interface UserProps {
   lastName: string;
   role: Role;
   isActive: boolean;
-  organizationId: number; // Updated to number
+  organizationId: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export class User extends Entity<number> {
-  // Now uses number
+export class User extends Entity<string> {
   private props: UserProps;
 
-  private constructor(props: UserProps, id?: number) {
-    super(id ?? 0); // Default to 0
+  private constructor(props: UserProps, id?: string) {
+    super(id ?? uuidv7());
     this.props = props;
   }
 
-  static create(props: UserProps, id?: number): User {
+  static create(props: UserProps, id?: string): User {
     if (!props.email || !props.email.includes("@")) {
       throw new Error("Invalid email address");
     }
@@ -32,7 +32,7 @@ export class User extends Entity<number> {
     if (!props.lastName || props.lastName.trim().length === 0) {
       throw new Error("Last name is required");
     }
-    if (props.organizationId <= 0) {
+    if (!props.organizationId || props.organizationId.trim().length === 0) {
       throw new Error("Valid organization ID is required");
     }
     return new User(props, id);
@@ -56,9 +56,9 @@ export class User extends Entity<number> {
   get isActive(): boolean {
     return this.props.isActive;
   }
-  get organizationId(): number {
+  get organizationId(): string {
     return this.props.organizationId;
-  } // Updated
+  }
   get createdAt(): Date {
     return this.props.createdAt;
   }

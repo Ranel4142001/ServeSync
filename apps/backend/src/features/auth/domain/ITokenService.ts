@@ -1,10 +1,10 @@
 import { Role } from "./Role.enum";
 
 export interface TokenPayload {
-  userId: number; // Updated to number
+  userId: string;
   email: string;
   role: Role;
-  organizationId: number; // Updated to number
+  organizationId: string;
 }
 
 export interface ITokenService {

@@ -2,7 +2,7 @@ import { Organization } from './Organization.entity';
 
 export interface IOrganizationRepository {
   // Find an organization by numeric ID
-  findById(id: number): Promise<Organization | null>;
+  findById(id: string): Promise<Organization | null>;
 
   // Find an organization by slug
   findBySlug(slug: string): Promise<Organization | null>;

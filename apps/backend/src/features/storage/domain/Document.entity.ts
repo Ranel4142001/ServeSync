@@ -1,4 +1,5 @@
 import { Entity } from "@shared/domain/Entity";
+import { uuidv7 } from "@shared/utils/idGenerators";
 
 // Shape of data required to construct a Document
 interface DocumentProps {
@@ -6,19 +7,19 @@ interface DocumentProps {
   s3Key: string; 
   mimeType: string;
   sizeBytes: number;
-  ticketId: number; // Changed to number
+  ticketId: string;
   createdAt: Date;
 }
 
-export class Document extends Entity<number> { // Changed to number
+export class Document extends Entity<string> {
   private props: DocumentProps;
 
-  private constructor(props: DocumentProps, id?: number) {
-    super(id ?? 0); // Defaults to 0
+  private constructor(props: DocumentProps, id?: string) {
+    super(id ?? uuidv7());
     this.props = props;
   }
 
-  static create(props: DocumentProps, id?: number): Document {
+  static create(props: DocumentProps, id?: string): Document {
     if (!props.fileName || props.fileName.trim().length === 0) {
       throw new Error("File name is required");
     }
@@ -35,7 +36,7 @@ export class Document extends Entity<number> { // Changed to number
       throw new Error("File size must be greater than zero");
     }
 
-    if (props.ticketId <= 0) {
+    if (!props.ticketId || props.ticketId.trim().length === 0) {
       throw new Error("A valid Ticket ID is required");
     }
 
@@ -53,7 +54,7 @@ export class Document extends Entity<number> { // Changed to number
   get s3Key(): string { return this.props.s3Key; }
   get mimeType(): string { return this.props.mimeType; }
   get sizeBytes(): number { return this.props.sizeBytes; }
-  get ticketId(): number { return this.props.ticketId; }
+  get ticketId(): string { return this.props.ticketId; }
   get createdAt(): Date { return this.props.createdAt; }
 
   get humanSize(): string {
@@ -74,7 +75,7 @@ export class Document extends Entity<number> { // Changed to number
       mimeType: this.props.mimeType,
       sizeBytes: this.props.sizeBytes,
       humanSize: this.humanSize,
-      ticketId: this.props.ticketId, // Now number
+      ticketId: this.props.ticketId,
       createdAt: this.props.createdAt,
     };
   }

@@ -1,4 +1,5 @@
 import { Entity } from "@shared/domain/Entity";
+import { uuidv7 } from "@shared/utils/idGenerators";
 
 // Shape of data required to construct an Organization
 interface OrganizationProps {
@@ -9,18 +10,18 @@ interface OrganizationProps {
   updatedAt: Date;
 }
 
-export class Organization extends Entity<number> {
+export class Organization extends Entity<string> {
   private props: OrganizationProps;
 
   // Private — forces use of the create() factory method
-  private constructor(props: OrganizationProps, id?: number) {
-    // If id is undefined, pass 0 (or let database assign it during creation)
-    super(id ?? 0);
+  private constructor(props: OrganizationProps, id?: string) {
+    // If id is undefined, generate a UUID v7
+    super(id ?? uuidv7());
     this.props = props;
   }
 
   // Factory method — validates name and slug before the object is created
-  static create(props: OrganizationProps, id?: number): Organization {
+  static create(props: OrganizationProps, id?: string): Organization {
     if (!props.name || props.name.trim().length === 0) {
       throw new Error("Organization name is required");
     }
@@ -66,7 +67,7 @@ export class Organization extends Entity<number> {
 
   toJSON() {
     return {
-      id: this._id, // This is now a number
+      id: this._id,
       code: this.props.code,
       name: this.props.name,
       slug: this.props.slug,

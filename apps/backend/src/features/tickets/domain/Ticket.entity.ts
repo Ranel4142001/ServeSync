@@ -1,4 +1,5 @@
 import { Entity } from "@shared/domain/Entity";
+import { uuidv7 } from "@shared/utils/idGenerators";
 import { TicketStatus } from "./TicketStatus.enum";
 import { TicketPriority } from "./TicketPriority.enum";
 
@@ -8,22 +9,22 @@ interface TicketProps {
   priority: TicketPriority;
   category: string | null;
   aiTriage: string | null;
-  organizationId: number; 
-  clientId: number;       
-  agentId: number | null;
+  organizationId: string; 
+  clientId: string;       
+  agentId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export class Ticket extends Entity<number> {
+export class Ticket extends Entity<string> {
   private props: TicketProps;
 
-  private constructor(props: TicketProps, id?: number) {
-    super(id ?? 0);
+  private constructor(props: TicketProps, id?: string) {
+    super(id ?? uuidv7());
     this.props = props;
   }
 
-  static create(props: TicketProps, id?: number): Ticket {
+  static create(props: TicketProps, id?: string): Ticket {
     if (!props.title || props.title.trim().length === 0) {
       throw new Error("Ticket title is required");
     }
@@ -41,9 +42,9 @@ export class Ticket extends Entity<number> {
   get priority(): TicketPriority { return this.props.priority; }
   get category(): string | null { return this.props.category; }
   get aiTriage(): string | null { return this.props.aiTriage; }
-  get organizationId(): number { return this.props.organizationId; }
-  get clientId(): number { return this.props.clientId; }
-  get agentId(): number | null { return this.props.agentId; }
+  get organizationId(): string { return this.props.organizationId; }
+  get clientId(): string { return this.props.clientId; }
+  get agentId(): string | null { return this.props.agentId; }
   get createdAt(): Date { return this.props.createdAt; }
   get updatedAt(): Date { return this.props.updatedAt; }
 
@@ -51,7 +52,7 @@ export class Ticket extends Entity<number> {
     return this.props.status !== TicketStatus.CLOSED;
   }
 
-  assignAgent(agentId: number): void {
+  assignAgent(agentId: string): void {
     this.props.agentId = agentId;
     if (this.props.status === TicketStatus.OPEN) {
       this.props.status = TicketStatus.IN_PROGRESS;

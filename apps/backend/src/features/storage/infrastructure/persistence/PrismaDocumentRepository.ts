@@ -20,13 +20,13 @@ export class PrismaDocumentRepository implements IDocumentRepository {
     );
   }
 
-  async findById(id: number): Promise<Document | null> {
+  async findById(id: string): Promise<Document | null> {
     const raw = await this.prisma.document.findUnique({ where: { id } });
     if (!raw) return null;
     return this.toEntity(raw);
   }
 
-  async findByTicketId(ticketId: number): Promise<Document[]> {
+  async findByTicketId(ticketId: string): Promise<Document[]> {
     const rows = await this.prisma.document.findMany({
       where: { ticketId },
       orderBy: { createdAt: "desc" },
@@ -35,36 +35,23 @@ export class PrismaDocumentRepository implements IDocumentRepository {
   }
 
   async save(document: Document): Promise<Document> {
-    // If id exists and is > 0, perform an update
-    if (document.id && document.id > 0) {
-      const raw = await this.prisma.document.update({
-        where: { id: document.id },
-        data: {
-          fileName: document.fileName,
-          s3Key: document.s3Key,
-          mimeType: document.mimeType,
-          sizeBytes: document.sizeBytes,
-          ticketId: document.ticketId,
-        },
-      });
-      return this.toEntity(raw);
-    }
+    const data = {
+      fileName: document.fileName,
+      s3Key: document.s3Key,
+      mimeType: document.mimeType,
+      sizeBytes: document.sizeBytes,
+      ticketId: document.ticketId,
+    };
 
-    // Otherwise, create a new record
-    const raw = await this.prisma.document.create({
-      data: {
-        fileName: document.fileName,
-        s3Key: document.s3Key,
-        mimeType: document.mimeType,
-        sizeBytes: document.sizeBytes,
-        ticketId: document.ticketId,
-        createdAt: document.createdAt,
-      },
+    const raw = await this.prisma.document.upsert({
+      where: { id: document.id },
+      update: data,
+      create: { id: document.id, ...data, createdAt: document.createdAt },
     });
     return this.toEntity(raw);
   }
 
-  async delete(id: number): Promise<void> {
+  async delete(id: string): Promise<void> {
     await this.prisma.document.delete({ where: { id } });
   }
 }

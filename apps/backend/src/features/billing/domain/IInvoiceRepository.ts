@@ -4,13 +4,13 @@ import { Invoice } from './Invoice.entity';
 export interface IInvoiceRepository {
 
   // Find a single invoice by ID
-  findById(id: number): Promise<Invoice | null>;
+  findById(id: string): Promise<Invoice | null>;
 
   // Find all invoices for an organization
-  findByOrganizationId(organizationId: number): Promise<Invoice[]>;
+  findByOrganizationId(organizationId: string): Promise<Invoice[]>;
 
   // Find only unpaid invoices for an organization
-  findUnpaidByOrganizationId(organizationId: number): Promise<Invoice[]>;
+  findUnpaidByOrganizationId(organizationId: string): Promise<Invoice[]>;
 
   // Save a new invoice or update an existing one
   save(invoice: Invoice): Promise<Invoice>;

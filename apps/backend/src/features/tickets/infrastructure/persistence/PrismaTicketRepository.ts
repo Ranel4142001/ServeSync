@@ -44,13 +44,13 @@ export class PrismaTicketRepository implements ITicketRepository {
     );
   }
 
-  async findById(id: number): Promise<Ticket | null> {
+  async findById(id: string): Promise<Ticket | null> {
     const raw = await this.prisma.ticket.findUnique({ where: { id } });
     if (!raw) return null;
     return this.toTicketEntity(raw);
   }
 
-  async findByOrganizationId(organizationId: number): Promise<Ticket[]> {
+  async findByOrganizationId(organizationId: string): Promise<Ticket[]> {
     const rows = await this.prisma.ticket.findMany({
       where:   { organizationId },
       orderBy: { createdAt: 'desc' },
@@ -58,7 +58,7 @@ export class PrismaTicketRepository implements ITicketRepository {
     return rows.map(row => this.toTicketEntity(row));
   }
 
-  async findByClientId(clientId: number): Promise<Ticket[]> {
+  async findByClientId(clientId: string): Promise<Ticket[]> {
     const rows = await this.prisma.ticket.findMany({
       where:   { clientId },
       orderBy: { createdAt: 'desc' },
@@ -67,7 +67,7 @@ export class PrismaTicketRepository implements ITicketRepository {
   }
 
   async findByStatus(
-    organizationId: number,
+    organizationId: string,
     status: TicketStatus
   ): Promise<Ticket[]> {
     const rows = await this.prisma.ticket.findMany({
@@ -90,23 +90,17 @@ export class PrismaTicketRepository implements ITicketRepository {
       updatedAt:      new Date(),
     };
 
-    let raw;
-    if (ticket.id && ticket.id > 0) {
-      raw = await this.prisma.ticket.update({
-        where: { id: ticket.id },
-        data,
-      });
-    } else {
-      raw = await this.prisma.ticket.create({
-        data: { ...data, createdAt: new Date() },
-      });
-    }
+    const raw = await this.prisma.ticket.upsert({
+      where: { id: ticket.id },
+      update: data,
+      create: { id: ticket.id, ...data, createdAt: new Date() },
+    });
 
     return this.toTicketEntity(raw);
   }
 
   // Messages are ordered oldest-first to preserve conversation order
-  async findMessagesByTicketId(ticketId: number): Promise<Message[]> {
+  async findMessagesByTicketId(ticketId: string): Promise<Message[]> {
     const rows = await this.prisma.message.findMany({
       where:   { ticketId },
       orderBy: { createdAt: 'asc' },
@@ -117,6 +111,7 @@ export class PrismaTicketRepository implements ITicketRepository {
   async saveMessage(message: Message): Promise<Message> {
     const raw = await this.prisma.message.create({
       data: {
+        id:        message.id,
         body:      message.body,
         isAiDraft: message.isAiDraft,
         ticketId:  message.ticketId,

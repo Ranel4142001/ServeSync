@@ -4,7 +4,7 @@ import { IAIProvider }       from '../domain/IAIProvider';
 import { ITicketRepository } from '../../tickets/domain/ITicketRepository';
 
 export interface TriageTicketInput {
-  ticketId: number;
+  ticketId: string;
 }
 
 export interface TriageTicketOutput {

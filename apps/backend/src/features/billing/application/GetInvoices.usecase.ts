@@ -5,7 +5,7 @@ import { Role } from "../../auth/domain/Role.enum";
 import { IInvoiceRepository } from "../domain/IInvoiceRepository";
 
 export interface GetInvoicesInput {
-  organizationId: number;
+  organizationId: string;
   role: Role;
   unpaidOnly?: boolean;
 }

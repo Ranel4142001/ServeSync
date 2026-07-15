@@ -5,8 +5,8 @@ import { Role } from "../../auth/domain/Role.enum";
 import { ITicketRepository } from "../domain/ITicketRepository";
 
 export interface GetTicketsInput {
-  organizationId: number;
-  userId: number;
+  organizationId: string;
+  userId: string;
   role: Role;
 }
 

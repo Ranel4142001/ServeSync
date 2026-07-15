@@ -21,13 +21,13 @@ export class PrismaInvoiceRepository implements IInvoiceRepository {
     );
   }
 
-  async findById(id: number): Promise<Invoice | null> {
+  async findById(id: string): Promise<Invoice | null> {
     const raw = await this.prisma.invoice.findUnique({ where: { id } });
     if (!raw) return null;
     return this.toEntity(raw);
   }
 
-  async findByOrganizationId(organizationId: number): Promise<Invoice[]> {
+  async findByOrganizationId(organizationId: string): Promise<Invoice[]> {
     const rows = await this.prisma.invoice.findMany({
       where: { organizationId },
       orderBy: { createdAt: "desc" },
@@ -35,7 +35,7 @@ export class PrismaInvoiceRepository implements IInvoiceRepository {
     return rows.map((row) => this.toEntity(row));
   }
 
-  async findUnpaidByOrganizationId(organizationId: number): Promise<Invoice[]> {
+  async findUnpaidByOrganizationId(organizationId: string): Promise<Invoice[]> {
     const rows = await this.prisma.invoice.findMany({
       where: {
         organizationId,
@@ -48,6 +48,7 @@ export class PrismaInvoiceRepository implements IInvoiceRepository {
 
   async save(invoice: Invoice): Promise<Invoice> {
     const data = {
+      number: invoice.number,
       amount: invoice.amount,
       currency: invoice.currency,
       description: invoice.description,
@@ -55,24 +56,10 @@ export class PrismaInvoiceRepository implements IInvoiceRepository {
       organizationId: invoice.organizationId,
     };
 
-    // If id > 0, execute database updates
-    if (invoice.id && invoice.id > 0) {
-      const raw = await this.prisma.invoice.update({
-        where: { id: invoice.id },
-        data,
-      });
-      return this.toEntity(raw);
-    }
-
-    // New invoice creation — clean database write without manual loops!
-    // If you have a matching `number` column in your DB schema, we pass invoice.number (or null)
-    // and let our global Prisma computed extension output 'INV-2026-0000X' cleanly later.
-    const raw = await this.prisma.invoice.create({
-      data: {
-        number: invoice.number,
-        ...data,
-        createdAt: new Date(),
-      },
+    const raw = await this.prisma.invoice.upsert({
+      where: { id: invoice.id },
+      update: data,
+      create: { id: invoice.id, ...data, createdAt: new Date() },
     });
     return this.toEntity(raw);
   }

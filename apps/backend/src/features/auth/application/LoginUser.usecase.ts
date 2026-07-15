@@ -12,11 +12,11 @@ export interface LoginUserInput {
 export interface LoginUserOutput {
   accessToken: string;
   user: {
-    id: number; // Updated to number
+    id: string;
     email: string;
     fullName: string;
     role: string;
-    organizationId: number; // Updated to number
+    organizationId: string;
   };
 }
 

@@ -11,7 +11,7 @@ export interface RegisterUserInput {
   firstName: string;
   lastName: string;
   role: Role;
-  organizationId: number;
+  organizationId: string;
 }
 
 export interface RegisterUserOutput {

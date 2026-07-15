@@ -25,16 +25,16 @@ export function registerTicketGateway(io: Server): void {
 }
 
 // Broadcast a new ticket to all agents in the organization
-export function emitTicketCreated(io: Server, organizationId: number, ticket: any): void {
-  io.to(String(organizationId)).emit('ticket:created', ticket);
+export function emitTicketCreated(io: Server, organizationId: string, ticket: any): void {
+  io.to(organizationId).emit('ticket:created', ticket);
 }
 
 // Broadcast a new message to everyone viewing that ticket
-export function emitNewMessage(io: Server, ticketId: number, message: any): void {
+export function emitNewMessage(io: Server, ticketId: string, message: any): void {
   io.to(`ticket:${ticketId}`).emit('message:new', message);
 }
 
 // Broadcast a ticket update (e.g. status change) to the organization
-export function emitTicketUpdated(io: Server, organizationId: number, ticket: any): void {
-  io.to(String(organizationId)).emit('ticket:updated', ticket);
+export function emitTicketUpdated(io: Server, organizationId: string, ticket: any): void {
+  io.to(organizationId).emit('ticket:updated', ticket);
 }

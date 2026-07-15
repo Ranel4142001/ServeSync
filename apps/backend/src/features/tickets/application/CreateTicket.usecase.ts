@@ -9,8 +9,8 @@ export interface CreateTicketInput {
   title:          string;
   priority?:      TicketPriority;
   category?:      string;
-  organizationId: number;
-  clientId:       number;
+  organizationId: string;
+  clientId:       string;
 }
 
 export interface CreateTicketOutput {

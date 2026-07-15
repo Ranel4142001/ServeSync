@@ -89,7 +89,7 @@ export function ticketRoutes(io: Server) {
       const userIds = [...new Set(
         result.value.tickets
           .flatMap(t => [t.agentId, t.clientId])
-          .filter((id): id is number => id !== null)
+          .filter((id): id is string => id !== null)
       )];
 
       // Single query to get all user names
@@ -176,10 +176,10 @@ export function ticketRoutes(io: Server) {
         return reply.status(400).send({ error: 'Reply body is required' });
       }
 
-      const numericTicketId = decodeId(id);
+      const decodedTicketId = decodeId(id);
 
       const result = await replyToTicketUseCase.execute({
-        ticketId:  numericTicketId,
+        ticketId:  decodedTicketId,
         body:      body.body,
         authorId:  userId,
         role,
@@ -190,7 +190,7 @@ export function ticketRoutes(io: Server) {
         return reply.status(400).send({ error: result.error });
       }
 
-      emitNewMessage(io, numericTicketId, result.value.message);
+      emitNewMessage(io, decodedTicketId, result.value.message);
 
       return reply.status(201).send({
         message:   'Reply sent successfully',

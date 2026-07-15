@@ -4,7 +4,7 @@ import { IStorageProvider }     from '../domain/IStorageProvider';
 import { IDocumentRepository } from '../domain/IDocumentRepository';
 
 export interface GetFileUrlInput {
-  documentId: number;
+  documentId: string;
 }
 
 export interface GetFileUrlOutput {

@@ -1,4 +1,5 @@
 import { Entity } from "@shared/domain/Entity";
+import { uuidv7 } from "@shared/utils/idGenerators";
 
 // Shape of data required to construct an Invoice
 interface InvoiceProps {
@@ -7,20 +8,20 @@ interface InvoiceProps {
   currency: string;
   description: string | null;
   paidAt: Date | null; 
-  organizationId: number; // Changed to number to match Organization entity
+  organizationId: string;
   createdAt: Date;
 }
 
-export class Invoice extends Entity<number> { // Changed generic identifier to number
+export class Invoice extends Entity<string> {
   private props: InvoiceProps;
 
-  private constructor(props: InvoiceProps, id?: number) {
-    super(id ?? 0); // Defaults to 0 for database auto-increment
+  private constructor(props: InvoiceProps, id?: string) {
+    super(id ?? uuidv7());
     this.props = props;
   }
 
   // Factory method — validates amount, currency, and organizationId before creating
-  static create(props: InvoiceProps, id?: number): Invoice {
+  static create(props: InvoiceProps, id?: string): Invoice {
     if (props.amount <= 0) {
       throw new Error("Invoice amount must be greater than zero");
     }
@@ -34,7 +35,7 @@ export class Invoice extends Entity<number> { // Changed generic identifier to n
       throw new Error("Currency must be a 3-letter code e.g. USD, PHP, EUR");
     }
 
-    if (!props.organizationId || props.organizationId <= 0) {
+    if (!props.organizationId || props.organizationId.trim().length === 0) {
       throw new Error("Valid Organization ID is required");
     }
 
@@ -57,7 +58,7 @@ export class Invoice extends Entity<number> { // Changed generic identifier to n
   get paidAt(): Date | null {
     return this.props.paidAt;
   }
-  get organizationId(): number { // Returns number
+  get organizationId(): string {
     return this.props.organizationId;
   }
   get createdAt(): Date {
@@ -88,7 +89,7 @@ export class Invoice extends Entity<number> { // Changed generic identifier to n
   // Serialize to plain object for persistence or HTTP response
   toJSON() {
     return {
-      id: this._id, // This is now a number
+      id: this._id,
       number: this.props.number,
       amount: this.props.amount,
       currency: this.props.currency,
@@ -96,7 +97,7 @@ export class Invoice extends Entity<number> { // Changed generic identifier to n
       description: this.props.description,
       isPaid: this.isPaid,
       paidAt: this.props.paidAt,
-      organizationId: this.props.organizationId, // This is now a number
+      organizationId: this.props.organizationId,
       createdAt: this.props.createdAt,
     };
   }

@@ -5,8 +5,8 @@ import { ITicketRepository } from '../../tickets/domain/ITicketRepository';
 import { IUserRepository }   from '../../auth/domain/IUserRepository';
 
 export interface DraftResponseInput {
-  ticketId: number;
-  agentId:  number;
+  ticketId: string;
+  agentId:  string;
 }
 
 export interface DraftResponseOutput {
@@ -39,11 +39,14 @@ export class DraftResponseUseCase
     // 3 — Map messages
     const conversationForAI = await Promise.all(
       messages.map(async (message) => {
-        const author = await this.userRepository.findById(message.authorId);
-        const role   = author?.isClient() ? 'client' : 'agent';
+        let role: 'client' | 'agent' = 'agent';
+        if (message.authorId) {
+          const author = await this.userRepository.findById(message.authorId);
+          role = author?.isClient() ? 'client' : 'agent';
+        }
 
         return {
-          role: role as 'client' | 'agent',
+          role,
           body: message.body,
         };
       })

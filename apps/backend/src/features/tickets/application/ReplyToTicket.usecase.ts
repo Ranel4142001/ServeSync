@@ -5,9 +5,9 @@ import { Role } from "../../auth/domain/Role.enum";
 import { ITicketRepository } from "../domain/ITicketRepository";
 
 export interface ReplyToTicketInput {
-  ticketId: number;
+  ticketId: string;
   body: string;
-  authorId: number;
+  authorId: string;
   role: Role;
   isAiDraft: boolean;
 }

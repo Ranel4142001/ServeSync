@@ -7,7 +7,7 @@ export interface CreateInvoiceInput {
   amount:         number;
   currency:       string;
   description?:   string;
-  organizationId: number;
+  organizationId: string;
 }
 
 export interface CreateInvoiceOutput {

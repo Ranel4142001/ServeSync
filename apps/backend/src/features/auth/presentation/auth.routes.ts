@@ -128,7 +128,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       select: { agentId: true, clientId: true }
     });
 
-    const ticketCounts = new Map<number, number>();
+    const ticketCounts = new Map<string, number>();
     for (const ticket of tickets) {
       if (ticket.agentId !== null) {
         ticketCounts.set(ticket.agentId, (ticketCounts.get(ticket.agentId) ?? 0) + 1);

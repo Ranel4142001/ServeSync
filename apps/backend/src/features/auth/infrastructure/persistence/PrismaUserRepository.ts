@@ -23,7 +23,7 @@ export class PrismaUserRepository implements IUserRepository {
     );
   }
 
-  async findById(id: number): Promise<User | null> {
+  async findById(id: string): Promise<User | null> {
     const raw = await this.prisma.user.findUnique({ where: { id } });
     if (!raw) return null;
     return this.toEntity(raw);
@@ -35,7 +35,7 @@ export class PrismaUserRepository implements IUserRepository {
     return this.toEntity(raw);
   }
 
-  async findByOrganizationId(organizationId: number): Promise<User[]> {
+  async findByOrganizationId(organizationId: string): Promise<User[]> {
     const rows = await this.prisma.user.findMany({ where: { organizationId } });
     return rows.map((row) => this.toEntity(row));
   }
@@ -52,17 +52,16 @@ export class PrismaUserRepository implements IUserRepository {
       updatedAt: new Date(),
     };
 
-    // If user.id is 0, Prisma treats it as a 'create' operation
     const raw = await this.prisma.user.upsert({
       where: { id: user.id },
       update: data,
-      create: { ...data, createdAt: new Date() },
+      create: { id: user.id, ...data, createdAt: new Date() },
     });
 
     return this.toEntity(raw);
   }
 
-  async delete(id: number): Promise<void> {
+  async delete(id: string): Promise<void> {
     await this.prisma.user.delete({ where: { id } });
   }
 

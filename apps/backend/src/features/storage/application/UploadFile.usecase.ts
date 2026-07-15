@@ -10,8 +10,8 @@ export interface UploadFileInput {
   buffer: Buffer;
   mimeType: string;
   sizeBytes: number;
-  ticketId: number;
-  organizationId: number;
+  ticketId: string;
+  organizationId: string;
 }
 
 export interface UploadFileOutput {
