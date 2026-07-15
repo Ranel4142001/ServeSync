@@ -24,8 +24,8 @@ export class GetInvoicesUseCase implements UseCase<
 
   async execute(input: GetInvoicesInput): Promise<Result<GetInvoicesOutput>> {
     // 1 — Security check
-    if (input.role !== Role.ADMIN) {
-      return Result.fail("Only admins can view billing information");
+    if (input.role !== Role.ADMIN && input.role !== Role.CLIENT) {
+      return Result.fail("Unauthorized to view billing information");
     }
 
     // 2 — Fetch data using numeric ID

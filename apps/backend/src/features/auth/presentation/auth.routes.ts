@@ -122,6 +122,22 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
 
     const users = await userRepository.findByOrganizationId(organizationId);
 
+    // Fetch all tickets for this organization to count per-user
+    const tickets = await prisma.ticket.findMany({
+      where: { organizationId },
+      select: { agentId: true, clientId: true }
+    });
+
+    const ticketCounts = new Map<number, number>();
+    for (const ticket of tickets) {
+      if (ticket.agentId !== null) {
+        ticketCounts.set(ticket.agentId, (ticketCounts.get(ticket.agentId) ?? 0) + 1);
+      }
+      if (ticket.clientId !== null) {
+        ticketCounts.set(ticket.clientId, (ticketCounts.get(ticket.clientId) ?? 0) + 1);
+      }
+    }
+
     return reply.status(200).send({
       users: users.map(u => ({
         id:        u.id,
@@ -130,6 +146,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
         role:      u.role,
         isActive:  u.isActive,
         createdAt: u.createdAt,
+        ticketsCount: ticketCounts.get(u.id) ?? 0,
       })),
       total: users.length,
     });

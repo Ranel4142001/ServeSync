@@ -37,6 +37,8 @@ const navConfig: Record<string, NavItem[]> = {
     { section: 'Tools' },
     { icon: 'ti-robot',            label: 'AI assistant', path: '/agent/ai' },
     { icon: 'ti-upload',           label: 'Documents',    path: '/agent/documents' },
+    { section: 'Account' },
+    { icon: 'ti-settings',         label: 'Settings',     path: '/agent/settings' },
   ],
   CLIENT: [
     { section: 'Support' },
@@ -47,6 +49,7 @@ const navConfig: Record<string, NavItem[]> = {
     { icon: 'ti-file-invoice',     label: 'Invoices',     path: '/client/billing',   badge: '1' },
     { section: 'Account' },
     { icon: 'ti-user',             label: 'My profile',   path: '/client/profile' },
+    { icon: 'ti-settings',         label: 'Settings',     path: '/client/settings' },
   ],
 };
 

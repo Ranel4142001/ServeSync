@@ -10,15 +10,19 @@
  * so the same ticket always shows the same number.
  * The actual database ID (CUID) stays unchanged.
  */
-export function formatTicketId(id: string): string {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    // Simple string hash — deterministic, fast, no dependencies
-    hash = ((hash << 5) - hash) + id.charCodeAt(i);
-    hash = hash & hash; // Convert to 32-bit integer
+export function formatTicketId(id: string | number): string {
+  if (!id) return '';
+  const strId = String(id);
+  // If the ID is already formatted (starts with TICKET-), prepend #
+  if (strId.startsWith('TICKET-')) {
+    return `#${strId}`;
   }
-  const num = Math.abs(hash % 10000);
-  return `TICKET-${num.toString().padStart(4, '0')}`;
+  // Extract number from ID and pad to 4 digits
+  const numericId = parseInt(strId.replace(/[^\d]/g, ''), 10);
+  if (isNaN(numericId)) {
+    return `#TICKET-${strId}`;
+  }
+  return `#TICKET-${String(numericId).padStart(4, '0')}`;
 }
 
 /**

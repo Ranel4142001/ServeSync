@@ -48,10 +48,10 @@ export class PrismaInvoiceRepository implements IInvoiceRepository {
 
   async save(invoice: Invoice): Promise<Invoice> {
     const data = {
-      amount:         invoice.amount,
-      currency:       invoice.currency,
-      description:    invoice.description,
-      paidAt:         invoice.paidAt,
+      amount: invoice.amount,
+      currency: invoice.currency,
+      description: invoice.description,
+      paidAt: invoice.paidAt,
       organizationId: invoice.organizationId,
     };
 
@@ -69,7 +69,7 @@ export class PrismaInvoiceRepository implements IInvoiceRepository {
     // and let our global Prisma computed extension output 'INV-2026-0000X' cleanly later.
     const raw = await this.prisma.invoice.create({
       data: {
-        number:    invoice.number,
+        number: invoice.number,
         ...data,
         createdAt: new Date(),
       },

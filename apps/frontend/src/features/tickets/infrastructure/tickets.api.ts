@@ -29,3 +29,15 @@ export async function getTickets(): Promise<GetTicketsResponse> {
   const response = await api.get<GetTicketsResponse>('/tickets');
   return response.data;
 }
+
+// POST /tickets — create a new ticket (client only)
+export interface CreateTicketPayload {
+  title:     string;
+  priority?: string;
+  category?: string;
+}
+
+export async function createTicket(payload: CreateTicketPayload): Promise<{ message: string; id: number; title: string }> {
+  const response = await api.post<{ message: string; id: number; title: string }>('/tickets', payload);
+  return response.data;
+}

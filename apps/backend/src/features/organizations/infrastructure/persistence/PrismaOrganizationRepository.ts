@@ -9,7 +9,7 @@ export class PrismaOrganizationRepository implements IOrganizationRepository {
   private toEntity(raw: any): Organization {
     return Organization.create(
       {
-        code: raw.code,
+        code: raw.publicId ?? raw.code ?? null,
         name: raw.name,
         slug: raw.slug,
         createdAt: raw.createdAt,

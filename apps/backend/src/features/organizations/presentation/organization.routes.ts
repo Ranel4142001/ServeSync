@@ -2,7 +2,9 @@ import { FastifyInstance } from 'fastify';
 import prisma from '@shared/infrastructure/PrismaClient';
 import { PrismaOrganizationRepository } from '../infrastructure/persistence/PrismaOrganizationRepository';
 import { CreateOrganizationUseCase }     from '../application/CreateOrganization.usecase';
-import { decodeId } from '@shared/utils/idGenerators';
+import { decodeId, encodeId } from '@shared/utils/idGenerators';
+import { authenticate, requireRole } from '../../auth/presentation/rbac.middleware';
+import { Role }                      from '../../auth/domain/Role.enum';
 
 export async function organizationRoutes(app: FastifyInstance): Promise<void> {
 
@@ -46,9 +48,48 @@ export async function organizationRoutes(app: FastifyInstance): Promise<void> {
 
     return reply.status(200).send({
       id:        org.id,
+      code:      org.code,
       name:      org.name,
       slug:      org.slug,
       createdAt: org.createdAt,
+    });
+  });
+
+  // PATCH /organizations/:id — update organization
+  app.patch('/organizations/:id', {
+    preHandler: [authenticate, requireRole(Role.ADMIN)]
+  }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { name, slug } = request.body as { name?: string; slug?: string };
+
+    const decodedId = decodeId(id);
+    const org = await organizationRepository.findById(decodedId);
+
+    if (!org) {
+      return reply.status(404).send({ error: 'Organization not found' });
+    }
+
+    if (slug) {
+      const slugRegex = /^[a-z0-9-]+$/;
+      if (!slugRegex.test(slug)) {
+        return reply.status(400).send({ error: 'Slug must only contain lowercase letters, numbers, and hyphens' });
+      }
+    }
+
+    const updated = await prisma.organization.update({
+      where: { id: decodedId },
+      data: {
+        name: name ?? org.name,
+        slug: slug ?? org.slug,
+      }
+    });
+
+    return reply.status(200).send({
+      id:        updated.id,
+      code:      encodeId('org', updated.id),
+      name:      updated.name,
+      slug:      updated.slug,
+      createdAt: updated.createdAt,
     });
   });
 }

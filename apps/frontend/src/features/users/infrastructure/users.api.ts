@@ -9,6 +9,7 @@ export interface UserItem {
   role:      string;
   isActive:  boolean;
   createdAt: string;
+  ticketsCount?: number;
 }
 
 export interface GetUsersResponse {

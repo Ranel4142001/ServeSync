@@ -6,12 +6,17 @@ import {
 import { useTicketsStore }  from '../application/tickets.store';
 import { formatTicketId, timeAgo } from '@/shared/utils/formatters';
 
+import { useLocation } from 'react-router-dom';
+import { useAuthStore } from '@/features/auth';
+
 // Filter options — derived from backend enums
 const STATUS_OPTIONS   = ['All', 'OPEN', 'IN_PROGRESS', 'PENDING', 'RESOLVED', 'CLOSED'] as const;
 const PRIORITY_OPTIONS = ['All', 'URGENT', 'HIGH', 'MEDIUM', 'LOW'] as const;
 
 export function AdminTicketsPage() {
   const { tickets, isLoading, error, fetchTickets } = useTicketsStore();
+  const { user } = useAuthStore();
+  const location = useLocation();
 
   // ── Local filter state (UI concern, not in global store) ──
   const [statusFilter, setStatusFilter]     = useState<string>('All');
@@ -25,6 +30,15 @@ export function AdminTicketsPage() {
 
   // ── Apply filters to ticket list ──
   const filteredTickets = tickets.filter(t => {
+    // Role-specific route filters for agents/clients
+    if (location.pathname === '/agent/tickets') {
+      if (t.agentId !== user?.id) return false;
+    } else if (location.pathname === '/agent/unassigned') {
+      if (t.agentId !== null) return false;
+    } else if (location.pathname === '/client/tickets') {
+      if (t.clientId !== user?.id) return false;
+    }
+
     // Status filter
     if (statusFilter !== 'All' && t.status !== statusFilter) return false;
     // Priority filter

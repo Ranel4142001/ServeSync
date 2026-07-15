@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore, LoginPage, RegisterPage } from '@/features/auth';
 import { AdminDashboard, AgentDashboard, ClientDashboard } from '@/features/dashboard';
-import { AdminTicketsPage } from '@/features/tickets';
+import { AdminTicketsPage, NewTicketPage } from '@/features/tickets';
 import { AdminUsersPage } from '@/features/users';
 import { AdminOrganizationsPage } from '@/features/organizations';
 import { AdminInvoicesPage } from '@/features/billing';
@@ -111,9 +111,69 @@ export function AppRouter() {
           </ProtectedRoute>
         }/>
 
+        <Route path="/agent/tickets" element={
+          <ProtectedRoute>
+            <AdminTicketsPage />
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/agent/unassigned" element={
+          <ProtectedRoute>
+            <AdminTicketsPage />
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/agent/all" element={
+          <ProtectedRoute>
+            <AdminTicketsPage />
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/agent/ai" element={
+          <ProtectedRoute>
+            <AdminAiSettingsPage />
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/agent/settings" element={
+          <ProtectedRoute>
+            <AdminSettingsPage />
+          </ProtectedRoute>
+        }/>
+
         <Route path="/client/dashboard" element={
           <ProtectedRoute>
             <ClientDashboard />
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/client/tickets" element={
+          <ProtectedRoute>
+            <AdminTicketsPage />
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/client/new-ticket" element={
+          <ProtectedRoute>
+            <NewTicketPage />
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/client/billing" element={
+          <ProtectedRoute>
+            <AdminInvoicesPage />
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/client/profile" element={
+          <ProtectedRoute>
+            <AdminSettingsPage />
+          </ProtectedRoute>
+        }/>
+
+        <Route path="/client/settings" element={
+          <ProtectedRoute>
+            <AdminSettingsPage />
           </ProtectedRoute>
         }/>
 

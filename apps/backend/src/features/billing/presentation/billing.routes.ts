@@ -49,9 +49,9 @@ export async function billingRoutes(app: FastifyInstance): Promise<void> {
     });
   });
 
-  // GET /billing/invoices — get all invoices (admin only)
+  // GET /billing/invoices — get all invoices (admin and client)
   app.get('/billing/invoices', {
-    preHandler: [authenticate, requireRole(Role.ADMIN)]
+    preHandler: [authenticate, requireRole(Role.ADMIN, Role.CLIENT)]
   }, async (request, reply) => {
 
     const { organizationId, role } = request.currentUser;

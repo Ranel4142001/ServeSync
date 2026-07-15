@@ -28,3 +28,15 @@ export async function getInvoices(): Promise<GetInvoicesResponse> {
   const response = await api.get<GetInvoicesResponse>('/billing/invoices');
   return response.data;
 }
+
+// PATCH /billing/invoices/:id/pay — mark an invoice as paid
+export async function payInvoice(id: string | number): Promise<{ message: string; isPaid: boolean }> {
+  const response = await api.patch<{ message: string; isPaid: boolean }>(`/billing/invoices/${id}/pay`);
+  return response.data;
+}
+
+// POST /billing/invoices — create a new invoice
+export async function createInvoice(amount: number, description: string): Promise<Invoice> {
+  const response = await api.post<Invoice>('/billing/invoices', { amount, description });
+  return response.data;
+}
