@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+alembic
+pydantic[email]
+pydantic-settings
+python-socketio[asgi]
+pyjwt
+bcrypt
+psycopg2-binary
+uuid6
+google-generativeai
+python-multipart
+pytest
+ruff
+mypy
